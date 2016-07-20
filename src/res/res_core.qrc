@@ -1,0 +1,23 @@
+<RCC>
+    <qresource prefix="/core">
+        <file>livedoc_func.css</file>
+        <file>document-open-folder.png</file>
+        <file>folder-new-7.png</file>
+        <file>go-next.png</file>
+        <file>go-previous.png</file>
+        <file>document-close-4.png</file>
+        <file>document-save-5.png</file>
+        <file>tab-close-3.png</file>
+        <file>window-close-3.png</file>
+        <file>configure-5.png</file>
+        <file>help-about-3.png</file>
+        <file>help-contents-5.png</file>
+        <file>go-home-10.png</file>
+        <file>document-import-2.png</file>
+        <file>livedoc_items.html</file>
+        <file>projectmanager/database.png</file>
+        <file>projectmanager/localdrive.png</file>
+        <file>projectmanager/workspace_not_valid.png</file>
+        <file>ruag.png</file>
+    </qresource>
+</RCC>

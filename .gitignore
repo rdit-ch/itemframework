@@ -1,0 +1,43 @@
+# local data not intended to be pushed back to the origin
+local/
+TODO
+**/*.swp
+
+# Can also ignore all directories and files in a directory.
+build/
+**/moc
+**/obj
+**/doc
+documentation/html
+documentation/latex
+documentation/man
+
+# C++ objects and libs
+
+*.slo
+*.lo
+*.o
+*.a
+*.la
+*.lai
+*.so
+*.dll
+*.dylib
+
+# Qt-es
+
+*.pro.user
+*.pro.user.*
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.rc
+Makefile
+*.Debug
+*.Release
+*-build-*
+*.autosave
+*~
+*.backup
+target_wrapper.sh
+uic_wrapper.sh

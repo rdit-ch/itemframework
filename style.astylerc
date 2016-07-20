@@ -1,0 +1,20 @@
+# header block = if, for, while, ...
+
+# general style
+--style=1tbs
+--indent=spaces=4 # default
+--lineend=linux #only \r as line ending 
+
+# alignment
+--align-pointer=type #put asterisks to the type. eg. char* a
+--align-reference=type #put references to the type. eg. int& a
+
+# padding
+--break-blocks # insert empty lines between header blocks
+--unpad-paren # remove extra padding around parens
+--pad-oper # spaces around operators
+--pad-header # insert space between header blocks and the following paren
+--add-brackets # add brackets to one line conditionals
+
+#Temporarily disabled because of astyle bug: https://sourceforge.net/p/astyle/bugs/375/
+#--close-templates # remove whitespace in angle brackets of template definitions

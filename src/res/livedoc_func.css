@@ -1,0 +1,35 @@
+/* Inspired by doxygen ;)  With own layout and css.*/
+
+
+/* Overall Function Title */
+.func_header {  }
+
+
+/* Function Description */
+.funcd {margin: 10px; background: #BDB7C4;}
+
+/* Function Descripton Header */
+.funcdh { background-color: #E2E8F2;}
+.funcdh_tab td {padding:2px;}
+.funcdh_rettype { color: #253555;}
+.funcdh_name {color:black; font-weight:bold;}
+.funcdh_comma, .funcdh_parenth, .funcdh_equal {color:#0D4561;}
+.funcdh_argtype {color: #253555;}
+.funcdh_argname{color: #602020; font-weight:bold;}
+.funcdh_argdef {color:black; font-weight:bold;}
+
+
+/* Function Description Content */
+.funcdc td { padding-top: 7px; padding-bottom:7px; padding-left:4px; padding-right:4px; }
+.funcdc_desc {color: #27232B;}
+.funcdc_args_title {font-weight:bold}
+.funcdc_args_tab  td {padding:2px;}
+.funcdc_args_name{color: #602020; font-weight:bold;}
+.funcdc_args_desc{}
+.funcdc_args_desc_none{font-style:italic;}
+
+
+.funcdc_ret_title {font-weight:bold}
+.funcdc_ret_tab  td {padding:2px;}
+.funcdc_ret_desc{}
+.funcdc_ret_desc_none{font-style:italic;}

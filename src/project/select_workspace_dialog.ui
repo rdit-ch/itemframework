@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SelectWorkspaceDialog</class>
+ <widget class="QDialog" name="SelectWorkspaceDialog">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Manage Projects</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="groupBoxStart">
+     <property name="baseSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Start</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QPushButton" name="buttonNewWorkspace">
+        <property name="toolTip">
+         <string>Create a new Workspace.</string>
+        </property>
+        <property name="text">
+         <string>&amp;New...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonLoadWorkspace">
+        <property name="toolTip">
+         <string>Open an existing workspace.</string>
+        </property>
+        <property name="text">
+         <string>&amp;Open</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonEditWorkspace">
+        <property name="toolTip">
+         <string>Edit a workspace.</string>
+        </property>
+        <property name="text">
+         <string>&amp;Edit</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBoxRecent">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Recent Workspaces</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QTreeWidget" name="treeWidgetRecentWorkspace">
+        <property name="alternatingRowColors">
+         <bool>true</bool>
+        </property>
+        <property name="selectionMode">
+         <enum>QAbstractItemView::ContiguousSelection</enum>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>6</width>
+          <height>6</height>
+         </size>
+        </property>
+        <property name="rootIsDecorated">
+         <bool>false</bool>
+        </property>
+        <property name="sortingEnabled">
+         <bool>true</bool>
+        </property>
+        <property name="animated">
+         <bool>true</bool>
+        </property>
+        <attribute name="headerCascadingSectionResizes">
+         <bool>true</bool>
+        </attribute>
+        <attribute name="headerMinimumSectionSize">
+         <number>15</number>
+        </attribute>
+        <column>
+         <property name="text">
+          <string>WorkspaceObject</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Open</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Default</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Last Used</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Name</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Type</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Connection String</string>
+         </property>
+        </column>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontallLayoutSelectedWorkspace">
+     <property name="topMargin">
+      <number>6</number>
+     </property>
+     <item>
+      <spacer name="horizontalSpacer_4">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonAcceptDialog">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="toolTip">
+        <string>Load selected workspace from recent used list.</string>
+       </property>
+       <property name="text">
+        <string>&amp;Load</string>
+       </property>
+       <property name="shortcut">
+        <string>Ctrl+O</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonCancelDialog">
+       <property name="text">
+        <string>&amp;Cancel</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonCancelDialog</sender>
+   <signal>released()</signal>
+   <receiver>SelectWorkspaceDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>789</x>
+     <y>629</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>387</x>
+     <y>254</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonNewWorkspace</sender>
+   <signal>released()</signal>
+   <receiver>SelectWorkspaceDialog</receiver>
+   <slot>showDialogNewWorkspace()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>60</x>
+     <y>48</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>319</x>
+     <y>239</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonLoadWorkspace</sender>
+   <signal>released()</signal>
+   <receiver>SelectWorkspaceDialog</receiver>
+   <slot>showDialogLoadWorkspace()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>146</x>
+     <y>48</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>639</x>
+     <y>465</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonAcceptDialog</sender>
+   <signal>released()</signal>
+   <receiver>SelectWorkspaceDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>703</x>
+     <y>629</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>387</x>
+     <y>254</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonEditWorkspace</sender>
+   <signal>released()</signal>
+   <receiver>SelectWorkspaceDialog</receiver>
+   <slot>showDialogEditWorkspace()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>318</x>
+     <y>48</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>selectWorkspaceDialogAccepted()</slot>
+  <slot>removeWorkspaceFromRecentUsedList()</slot>
+  <slot>removeAllWorkspacesFromRecentUsedList()</slot>
+  <slot>selectedWorkspaceDescriptionChanged()</slot>
+  <slot>selectedWorkspaceNameChanged(QString)</slot>
+  <slot>showDialogNewWorkspace()</slot>
+  <slot>showDialogLoadWorkspace()</slot>
+  <slot>showDialogEditWorkspace()</slot>
+ </slots>
+</ui>

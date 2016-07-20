@@ -7,6 +7,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QKeyEvent>
+#include <cmath>
 
 ItemTemplatesWidget::ItemTemplatesWidget(QWidget *parent) :
     QDockWidget(parent),

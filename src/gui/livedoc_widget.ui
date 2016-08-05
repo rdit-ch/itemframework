@@ -145,7 +145,7 @@
      <x>0</x>
      <y>0</y>
      <width>449</width>
-     <height>19</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>
@@ -167,7 +167,7 @@
   </widget>
   <action name="actionPrevious">
    <property name="icon">
-    <iconset resource="../res/res_core.qrc">
+    <iconset theme="go-previous" resource="../res/res_core.qrc">
      <normaloff>:/core/go-previous.png</normaloff>:/core/go-previous.png</iconset>
    </property>
    <property name="text">
@@ -176,7 +176,7 @@
   </action>
   <action name="actionNext">
    <property name="icon">
-    <iconset resource="../res/res_core.qrc">
+    <iconset theme="go-next" resource="../res/res_core.qrc">
      <normaloff>:/core/go-next.png</normaloff>:/core/go-next.png</iconset>
    </property>
    <property name="text">
@@ -185,7 +185,7 @@
   </action>
   <action name="actionHome">
    <property name="icon">
-    <iconset resource="../res/res_core.qrc">
+    <iconset theme="go-home" resource="../res/res_core.qrc">
      <normaloff>:/core/go-home-10.png</normaloff>:/core/go-home-10.png</iconset>
    </property>
    <property name="text">
@@ -200,7 +200,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../res/res_core.qrc">
+    <iconset theme="document-import" resource="../res/res_core.qrc">
      <normaloff>:/core/document-import-2.png</normaloff>:/core/document-import-2.png</iconset>
    </property>
    <property name="text">

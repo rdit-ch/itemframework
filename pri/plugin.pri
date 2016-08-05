@@ -4,8 +4,10 @@ QT              += core gui xml widgets
 CONFIG          += plugin c++11
 TEMPLATE        =  lib
     
+warning(itemframework private headers exposed $$_PRO_FILE_PWD_) 
 INCLUDEPATH     += \
                    $$PROJECT_ROOT/itemframework/include \
+                   $$PROJECT_ROOT/itemframework/src \
                    $$PWD/ui_header
 
 QMAKE_LFLAGS    += -Wl,--unresolved-symbols=report-all

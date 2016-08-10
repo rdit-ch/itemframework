@@ -5,6 +5,7 @@
 #include "gui/gui_manager.h"
 #include "plugin/plugin_manager.h"
 #include "helper/startup_helper.h"
+#include <QAction>
 
 STARTUP_ADD_SINGLETON(Livedoc)
 

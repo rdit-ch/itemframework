@@ -147,7 +147,6 @@ HEADERS     +=     \
                 include/item/item_origin_visualizer.h \
                 include/plugin/plugin_manager.h \
                 include/plugin/interface_factory.h \
-                include/helper/callback.h \
                 include/helper/singleton.h \
                 include/helper/startup_helper.h \
                 include/helper/startup_helper_templates.h \

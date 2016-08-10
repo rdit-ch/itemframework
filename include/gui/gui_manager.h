@@ -3,17 +3,10 @@
 
 #include <QObject>
 #include <QMainWindow>
-#include <QMutex>
-#include <QtWidgets>
-#include <QStyle>
-#include <QDesktopWidget>
 
+#include <functional>
 #include "appcore.h"
-#include "helper/callback.h"
 #include "helper/singleton.h"
-#include "gui/gui_plugin_manager.h"
-#include "plugin/plugin_table_model.h"
-
 
 namespace Window_Layout
 {
@@ -59,9 +52,9 @@ public:
      * @brief This callback will be executed by an application close event.
      * If the callback returns true the close process will be continue -> shutdown application.
      * If the callback returns false the close process will be interrupted.
-     * @param Callback_Base<bool>* callback
+     * @param std::function<bool> callback
      */
-    void        register_close_handler(Callback_Base<bool>* callback);
+    void        register_close_handler(std::function<bool()> callback);
     void        register_close_window(QMainWindow* window);
     bool mainWindowIsActive() const;
 private:
@@ -69,10 +62,10 @@ private:
     QMainWindow*                main_window;
     QMenuBar*                    menubar;
     QStringList                 menu_view_list;
-    QList<Callback_Base<bool>*>  _closeApplicationCallbacks;
+    QList<std::function<bool()>>  _closeApplicationCallbacks;
     QList<QPointer<QMainWindow>>  lis_close_window;
     QAction* get_action(QMenu* parent, QString name);
-    GuiPluginManager* _uiPluginManager;
+    class GuiPluginManager* _uiPluginManager;
 
 
 protected:

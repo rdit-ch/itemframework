@@ -7,6 +7,8 @@
 #include "sql_workspace_gui.h"
 #include "project_manager.h"
 #include "project_manager_config.h"
+#include <QMenu>
+
 
 STARTUP_ADD_SINGLETON(ProjectManagerGui)
 
@@ -80,7 +82,7 @@ void ProjectManagerGui::setMainGuiElements()
     Gui_Manager::instance()->set_central_widget(_itemViewTabWidget);
 
     // Connect close application menu entry.
-    Gui_Manager::instance()->register_close_handler(new Callback<ProjectManagerGui, bool>(this, &ProjectManagerGui::closeWorkspace));
+    Gui_Manager::instance()->register_close_handler(std::bind(&ProjectManagerGui::closeWorkspace,this));
 
     // Connect show workspace manager menu entry.
     QAction* actionWorkspaceManager = Gui_Manager::instance()->get_action("Workspace Manager...");

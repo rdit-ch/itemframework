@@ -8,6 +8,8 @@
 #include "abstract_workspace_gui.h"
 #include "project_changed_extern_dialog.h"
 #include "project_manager_config.h"
+#include <QTimer>
+#include <QInputDialog>
 
 ProjectGui::ProjectGui(AbstractWorkspaceGui* parent, QSharedPointer<AbstractProject> project)
 {

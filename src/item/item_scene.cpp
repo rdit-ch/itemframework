@@ -14,6 +14,7 @@
 #include <QClipboard>
 #include <QRegularExpression>
 #include <QInputDialog>
+#include <QStyleOptionGraphicsItem>
 #include <qmath.h>
 #include <functional>
 

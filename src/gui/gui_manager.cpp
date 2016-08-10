@@ -4,6 +4,12 @@
 #include "error/console_widget.h"
 #include "error/console_model.h"
 #include "project/project_manager_gui.h"
+#include "gui/gui_plugin_manager.h"
+#include <QMenu>
+#include <QAction>
+#include <QMenuBar>
+#include <QPointer>
+#include <QDesktopWidget>
 
 
 STARTUP_ADD_SINGLETON(Gui_Manager)
@@ -33,7 +39,6 @@ Gui_Manager::Gui_Manager()
 Gui_Manager::~Gui_Manager()
 {
     delete _uiPluginManager;
-    qDeleteAll(_closeApplicationCallbacks);
 }
 
 bool Gui_Manager::postInit()
@@ -61,7 +66,7 @@ bool Gui_Manager::eventFilter(QObject* o, QEvent* e)
 
         // Go through all callbacks in callbacklist
         for (int i = 0; i < _closeApplicationCallbacks.count(); i++) {
-            if (!_closeApplicationCallbacks.at(i)->Execute()) {
+            if (!(_closeApplicationCallbacks.at(i))()) {
                 // If a callback return false - interrup close procedure and
                 // ignore the close event
                 ce->ignore();
@@ -90,7 +95,7 @@ bool Gui_Manager::eventFilter(QObject* o, QEvent* e)
 
 
 
-void Gui_Manager::register_close_handler(Callback_Base<bool>* callback)
+void Gui_Manager::register_close_handler(std::function<bool()> callback)
 {
     _closeApplicationCallbacks.append(callback);
 

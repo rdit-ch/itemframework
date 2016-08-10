@@ -1,6 +1,8 @@
 #include <QWidget>
 #include "abstract_workspace_gui.h"
 #include "project_manager_config.h"
+#include <QCheckBox>
+#include <QMessageBox>
 
 AbstractWorkspaceGui::AbstractWorkspaceGui()
 {

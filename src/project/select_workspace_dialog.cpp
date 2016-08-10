@@ -5,6 +5,9 @@
 #include "plugin/plugin_manager.h"
 #include "project_manager_gui.h"
 #include "project_manager_config.h"
+#include <QMenu>
+#include <QLabel>
+#include <QCheckBox>
 
 SelectWorkspaceDialog::SelectWorkspaceDialog(ProjectManager* projectManager) : QDialog(), ui(new Ui::SelectWorkspaceDialog)
 {

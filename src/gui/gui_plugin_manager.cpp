@@ -4,6 +4,8 @@
 #include "plugin/plugin_manager.h"
 #include "plugin/plugin_table_model.h"
 #include <QTableWidgetItem>
+#include <QInputDialog>
+#include <QLineEdit>
 
 GuiPluginManager::GuiPluginManager(QWidget* parent) :
     QDialog(parent), _ui(new Ui::GuiPluginManager)

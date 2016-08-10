@@ -6,6 +6,8 @@
 #include "file_workspace_edit_dialog.h"
 #include "item/item_view.h"
 #include "project_manager_config.h"
+#include <QAction>
+#include <QMenu>
 
 FileWorkspaceGui::FileWorkspaceGui()
 {

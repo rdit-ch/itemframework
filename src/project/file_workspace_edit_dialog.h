@@ -21,17 +21,20 @@ public:
     FileWorkspaceData* workspacePropertiesInitial() const;
     FileWorkspaceData* workspacePropertiesEdited() const;
 
+    QSharedPointer<FileWorkspace> workspace() const;
+
 private:
     enum EditDialogMode {
         WorkspaceSelection,
         NoWorkspaceSelection
     };
 
+    QSharedPointer<FileWorkspace> _fileWorkspace;
     void fillWorkspaceGuiElements(const QSharedPointer<FileWorkspace>& fileWorkspace);
     void setDialogMode(EditDialogMode mode);
     void overrideValidation();
     void enableGuiElements(bool state);
-    Ui::FileWorkspaceEditDialog* ui;
+    Ui::FileWorkspaceEditDialog* _ui;
     QDialog* _parent = nullptr;
     QAction* _actionFileExists = nullptr;
     QString _lastUsedPath;
@@ -47,8 +50,8 @@ protected:
     void reject();
 
 private slots:
+    void showFileDialog();
     void showSetWorkspaceFileDialog();
-    void showSetNewWorkspaceFileDialog();
     void onWorkspaceNameChanged(QString name);
     void onWorkspaceFileChanged(QString file);
     void onWorkspaceDescriptionChanged();

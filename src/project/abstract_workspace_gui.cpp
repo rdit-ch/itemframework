@@ -3,6 +3,8 @@
 #include "project_manager_config.h"
 #include <QCheckBox>
 #include <QMessageBox>
+#include <QMenu>
+#include <QAction>
 
 AbstractWorkspaceGui::AbstractWorkspaceGui()
 {
@@ -27,7 +29,8 @@ void AbstractWorkspaceGui::setGuiElements()
 {
     connect(_itemViewTabWidget, &QTabWidget::tabCloseRequested, this, &AbstractWorkspaceGui::closeProjectTabWidget);
     connect(_projectListDockWidget, &ProjectListDockWidget::loadProject, this, &AbstractWorkspaceGui::loadProject);
-    connect(_projectListDockWidget, &ProjectListDockWidget::showWorkspaceContextMenu, this, &AbstractWorkspaceGui::customContextMenuRequested);
+    connect(_projectListDockWidget, &ProjectListDockWidget::showWorkspaceContextMenu, this, &AbstractWorkspaceGui::workspaceMenuRequested);
+    connect(_projectListDockWidget, &ProjectListDockWidget::showMultiProjectContextMenu, this, &AbstractWorkspaceGui::multiProjectMenuRequested);
 }
 
 void AbstractWorkspaceGui::unsetGuiElements()
@@ -77,7 +80,9 @@ void AbstractWorkspaceGui::setProjectListDockWidget(ProjectListDockWidget* proje
 void AbstractWorkspaceGui::addProjectGui(const QSharedPointer<ProjectGui>& projectGui)
 {
     connect(projectGui.data(), &ProjectGui::projectGuiLabelChanged, this, &AbstractWorkspaceGui::projectGuiLabelChanged);
-    _projectListDockWidget->addProject(projectGui);
+    if(!_projectListDockWidget->contains(projectGui)){
+        _projectListDockWidget->addProject(projectGui);
+    }
 
     if (_isOpen) {
         loadProject(projectGui);
@@ -119,10 +124,10 @@ bool AbstractWorkspaceGui::loadProject(const QSharedPointer<ProjectGui>& project
     return false;
 }
 
-bool AbstractWorkspaceGui::unloadProject(const QSharedPointer<ProjectGui>& projectGui)
+bool AbstractWorkspaceGui::unloadProject(const QSharedPointer<ProjectGui>& projectGui, bool saveReminder)
 {
     if (_isOpen) {
-        if (projectGui->project()->isDirty()) {
+        if (saveReminder && projectGui->project()->isDirty()) {
             const QVector<QSharedPointer<ProjectGui>> dirtyProjects = QVector<QSharedPointer<ProjectGui>>() << projectGui;
 
             if (!showSaveReminder(dirtyProjects)) {
@@ -292,9 +297,65 @@ bool AbstractWorkspaceGui::closeWorkspace()
 // ---------------------------------------------------------------------------------------------------------------------
 
 
-void AbstractWorkspaceGui::customContextMenuRequested(const QPoint& position)
+void AbstractWorkspaceGui::workspaceMenuRequested(const QPoint& position)
 {
     emit showContextMenu(position);
+}
+
+void AbstractWorkspaceGui::multiProjectMenuRequested(const QPoint &position, const QList<QSharedPointer<ProjectGui> > projectGuis)
+{
+    QMenu projectContextMenue;
+    QAction* loadProject = projectContextMenue.addAction(QString("Open selected"));
+    QAction* fastLoadProject = projectContextMenue.addAction(QString("Open selected directly"));
+    fastLoadProject->setCheckable(true);
+    fastLoadProject->setChecked(true);
+    fastLoadProject->setData(QVariant::fromValue(projectGuis));
+    projectContextMenue.addAction(projectContextMenue.addSeparator());
+    QAction* saveProject = projectContextMenue.addAction(QString("Save selected"));
+    QAction* saveAllProjects = projectContextMenue.addAction(QLatin1String("Save All"));
+    projectContextMenue.addAction(projectContextMenue.addSeparator());
+    QAction* unloadProject = projectContextMenue.addAction(QString("Close selected"));
+    QAction* unloadAllExceptThisProject = projectContextMenue.addAction(QString("Close All Except selected"));
+    unloadAllExceptThisProject->setData(QVariant::fromValue(projectGuis));
+    QAction* unloadAllExceptVisibleProjects = projectContextMenue.addAction(QString("Close All Except Visible"));
+    unloadAllExceptVisibleProjects->setData(QVariant::fromValue(projectGuis));
+    QAction* unloadAllProjects = projectContextMenue.addAction(QLatin1String("Close All"));
+    projectContextMenue.addAction(projectContextMenue.addSeparator());
+    QAction* removeProject = projectContextMenue.addAction(QString("Remove selected Projects from Workspace"));
+    removeProject->setData(QVariant::fromValue(projectGuis));
+    QAction* deleteProject = projectContextMenue.addAction(QString("Delete selected Projects"));
+    deleteProject->setData(QVariant::fromValue(projectGuis));
+    projectContextMenue.addAction(projectContextMenue.addSeparator());
+    QAction* editProject = projectContextMenue.addAction(QString("Edit selected Projects..."));
+    QAction* infoProject = projectContextMenue.addAction(QString("Project Info"));
+
+    connect(saveAllProjects, &QAction::triggered, this, &AbstractWorkspaceGui::onSaveAllProjects);
+    connect(unloadAllProjects, &QAction::triggered, this, &AbstractWorkspaceGui::onUnloadAllProjects);
+    connect(unloadAllExceptThisProject, &QAction::triggered, this, &AbstractWorkspaceGui::onUnloadAllProjectsExceptSelected);
+    connect(unloadAllExceptVisibleProjects, &QAction::triggered, this, &AbstractWorkspaceGui::unloadAllProjectsExceptVisible);
+    connect(fastLoadProject, &QAction::triggered, this, &AbstractWorkspaceGui::onEnableFastLoadForSelected);
+    connect(removeProject, &QAction::triggered, this, &AbstractWorkspaceGui::onRemoveSelectedProjects);
+    connect(deleteProject, &QAction::triggered, this, &AbstractWorkspaceGui::onDeleteSelectedProjects);
+
+    int dialogPositionOffset = 0;
+    for(QSharedPointer<ProjectGui> projectGui : projectGuis){
+
+        projectGui->setDialogPositionOffset(QPoint(dialogPositionOffset, dialogPositionOffset));
+        dialogPositionOffset+=20;
+
+        if(!projectGui->isFastLoaded()){
+            fastLoadProject->setChecked(false);
+        }
+
+        connect(infoProject, &QAction::triggered, projectGui.data(), &ProjectGui::showProjectInfo);
+        connect(saveProject, &QAction::triggered, projectGui.data(), &ProjectGui::onSaveTrigger);
+        connect(loadProject, &QAction::triggered, projectGui.data(), &ProjectGui::onLoadTrigger);
+        connect(unloadProject, &QAction::triggered, projectGui.data(), &ProjectGui::onUnloadTrigger);
+        connect(editProject, &QAction::triggered, projectGui.data(), &ProjectGui::onEditTrigger);
+    }
+
+    projectContextMenue.exec(position);
+
 }
 
 void AbstractWorkspaceGui::onSaveProject()
@@ -319,6 +380,61 @@ void AbstractWorkspaceGui::onLoadAllProjects()
 {
     for (QSharedPointer<ProjectGui> projectGui : _projectListDockWidget->projectGuis()) {
         projectGui->load();
+    }
+}
+
+void AbstractWorkspaceGui::onRemoveSelectedProjects()
+{
+    QAction* trigger = qobject_cast<QAction*>(sender());
+    if(trigger != nullptr){
+        int ret = QMessageBox::question(0, tr("Remove selected Projects."),
+                                        tr("Do you want to remove selected Projects from this Workspace?"),
+                                        QMessageBox::Ok | QMessageBox::Cancel);
+
+        if (ret == QMessageBox::Ok) {
+            for(QSharedPointer<ProjectGui> projectGui : trigger->data().value<QList<QSharedPointer<ProjectGui>>>()){
+                removeProject(projectGui,false);
+            }
+        }
+    }
+}
+
+void AbstractWorkspaceGui::onDeleteSelectedProjects()
+{
+    QAction* trigger = qobject_cast<QAction*>(sender());
+    if(trigger != nullptr){
+        int ret = QMessageBox::question(0, tr("Delete selected Projects."),
+                                        tr("Do you want to delete selected Projects?"),
+                                        QMessageBox::Ok | QMessageBox::Cancel);
+
+        if (ret == QMessageBox::Ok) {
+            for(QSharedPointer<ProjectGui> projectGui : trigger->data().value<QList<QSharedPointer<ProjectGui>>>()){
+                deleteProject(projectGui,false);
+            }
+        }
+    }
+}
+
+void AbstractWorkspaceGui::onUnloadAllProjectsExceptSelected()
+{
+    QAction* trigger = qobject_cast<QAction*>(sender());
+    if(trigger != nullptr){
+        QList<QSharedPointer<ProjectGui> > projectGuis = trigger->data().value<QList<QSharedPointer<ProjectGui>>>();
+        for(QSharedPointer<ProjectGui> projectGui : _projectListDockWidget->projectGuis()){
+            if(!projectGuis.contains(projectGui) && projectGui->isLoaded()){
+                projectGui->unload();
+            }
+        }
+    }
+}
+
+void AbstractWorkspaceGui::onEnableFastLoadForSelected(bool enable)
+{
+    QAction* trigger = qobject_cast<QAction*>(sender());
+    if(trigger != nullptr){
+        for(QSharedPointer<ProjectGui> projectGui : trigger->data().value<QList<QSharedPointer<ProjectGui>>>()){
+            projectGui->onFastLoad(enable);
+        }
     }
 }
 
@@ -382,4 +498,29 @@ bool AbstractWorkspaceGui::showSaveReminder(const QVector<QSharedPointer<Project
     }
 
     return true;
+}
+
+QMenu* AbstractWorkspaceGui::switchWorkspaceMenu() const
+{
+    return _switchWorkspaceMenu;
+}
+
+void AbstractWorkspaceGui::setSwitchWorkspaceMenu(QMenu *switchWorkspaceMenu)
+{
+    _switchWorkspaceMenu = switchWorkspaceMenu;
+}
+
+QSharedPointer<ProjectGui> AbstractWorkspaceGui::projectGui(const QSharedPointer<AbstractProject> &project)
+{
+    for (QListWidgetItem* item : _projectListDockWidget->listWidgetItems()) {
+        QSharedPointer<ProjectGui> projectGuiFromListWidget = item->data(Qt::UserRole).value<QSharedPointer<ProjectGui>>();
+        if(projectGuiFromListWidget.isNull()){
+            continue;
+        }
+
+        if (projectGuiFromListWidget->project() == project) {
+            return projectGuiFromListWidget;
+        }
+    }
+    return QSharedPointer<ProjectGui>();
 }

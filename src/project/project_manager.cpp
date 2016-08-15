@@ -23,8 +23,8 @@ QSharedPointer<AbstractWorkspace> ProjectManager::currentWorkspace() const
 void ProjectManager::setCurrentWorkspace(const QSharedPointer<AbstractWorkspace>& currentWorkspace)
 {
     currentWorkspace->setLastUsedDateTime(QDateTime::currentDateTime().toString(LastUsedDateFormat));
-    saveRecentWorkspacesSettings();
     _currentWorkspace = currentWorkspace;
+    saveRecentWorkspacesSettings();
 }
 
 QVector<QSharedPointer<AbstractWorkspace> > ProjectManager::recentWorkspaces() const
@@ -75,14 +75,26 @@ QVector<QSharedPointer<AbstractWorkspace> > ProjectManager::workspaces() const
     return _recentWorkspaces;
 }
 
+QString ProjectManager::workDirectoryPath() const
+{
+    return _workDirectory;
+}
+
+void ProjectManager::setWorkDirectoryPath(const QString &workDirectoryPath)
+{
+    _workDirectory = workDirectoryPath;
+    QSettings settings;
+    settings.beginGroup("ProjectManager");
+    settings.setValue(TravizWorkDirectory, _workDirectory);
+    settings.endGroup();
+}
+
 void ProjectManager::initRecentWorkspaces()
 {
     QSettings settings;
     settings.beginGroup("ProjectManager");
-
     QDomDocument recentWorkspacesDomDocument;
     recentWorkspacesDomDocument.setContent(settings.value(SettingRecentWsp).value<QByteArray>());
-
     QDomElement const rootElement = recentWorkspacesDomDocument.documentElement();
 
     if (rootElement.isNull() || rootElement.tagName() != RecentWspDomElmTagName || !rootElement.hasChildNodes()) {
@@ -101,7 +113,6 @@ void ProjectManager::initRecentWorkspaces()
             }
 
             QString const instanceType = workspaceElement.attribute(RecentWspDomElmTypeAttLabel);
-
             QSharedPointer<AbstractWorkspace> abstractWorkspace = QSharedPointer<AbstractWorkspace>(PluginManager::instance()->createInstance<AbstractWorkspace>(instanceType));
 
             if (abstractWorkspace.isNull()) {
@@ -116,13 +127,8 @@ void ProjectManager::initRecentWorkspaces()
 
             QString const lastUsedTimeDate = workspaceElement.attribute(RecentWspDomElmLastUsedAttLabel);
             abstractWorkspace->setLastUsedDateTime(lastUsedTimeDate);
-
-
-
             abstractWorkspace->init();
-
             addRecentWorkspace(abstractWorkspace);
-
             workspaceNode = workspaceNode.nextSibling();
         }
     }

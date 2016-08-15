@@ -46,15 +46,17 @@ bool SqlWorkspaceGui::isTypeFriendly(const QSharedPointer<AbstractWorkspace>& wo
     return true;
 }
 
-bool SqlWorkspaceGui::removeProject(const QSharedPointer<ProjectGui>& projectGui)
+bool SqlWorkspaceGui::removeProject(const QSharedPointer<ProjectGui>& projectGui, bool showMessagebox)
 {
     Q_UNUSED(projectGui);
+    Q_UNUSED(showMessagebox);
     return true;
 }
 
-bool SqlWorkspaceGui::deleteProject(const QSharedPointer<ProjectGui>& projectGui)
+bool SqlWorkspaceGui::deleteProject(const QSharedPointer<ProjectGui>& projectGui, bool showMessagebox)
 {
     Q_UNUSED(projectGui);
+    Q_UNUSED(showMessagebox);
     return true;
 }
 
@@ -66,4 +68,33 @@ bool SqlWorkspaceGui::saveExternChangedProjects()
 void SqlWorkspaceGui::resetExternChangedProjects()
 {
 
+}
+
+void SqlWorkspaceGui::editProject(QSharedPointer<ProjectGui> projectGui)
+{
+    Q_UNUSED(projectGui);
+}
+
+void SqlWorkspaceGui::showChangeSourceDialog(const QSharedPointer<AbstractWorkspace> &workspace)
+{
+    Q_UNUSED(workspace);
+}
+
+bool SqlWorkspaceGui::exportToFileSystem(QString exportPath, ExportOptions options, QVector<QSharedPointer<AbstractProject>> projects)
+{
+    Q_UNUSED(exportPath);
+    Q_UNUSED(options);
+    Q_UNUSED(projects);
+    return true;
+}
+
+void SqlWorkspaceGui::searchProjectSource(QSharedPointer<ProjectGui> projectGui)
+{
+    Q_UNUSED(projectGui);
+}
+
+void SqlWorkspaceGui::createProjectsFromImport(const QStringList &projectPaths, bool overwrite)
+{
+    Q_UNUSED(projectPaths);
+    Q_UNUSED(overwrite);
 }

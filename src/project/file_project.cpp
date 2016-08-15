@@ -10,12 +10,8 @@ FileProject::FileProject(SettingsScope* parentSettingsScope,
 {
     QDomDocument domDocument = projectDomDocument;
     bool projectIsValid = true;
-    _filePath = filePath;
-    _fileInfo = QFileInfo(_filePath);
-
-    _autosaveFilePath = QString("%1/.%2.%3").arg(_fileInfo.absolutePath())
-                        .arg(_fileInfo.baseName())
-                        .arg(ProFileAutosaveExt);
+    _fileInfo = QFileInfo(filePath);
+    setAutosaveFilePath(QString("%1/.%2.%3").arg(_fileInfo.absolutePath()).arg(_fileInfo.baseName()).arg(ProFileAutosaveExt));
 
     if (autosaveExists()) {
         _autosaveDomDocument = FileHelper::domDocumentFromXMLFile(_autosaveFilePath);
@@ -36,10 +32,8 @@ FileProject::FileProject(SettingsScope* parentSettingsScope,
     setValid(projectIsValid);
 }
 
-
 FileProject::~FileProject()
 {
-    FileHelper::removeFile(_autosaveFilePath);
 }
 
 bool FileProject::autosaveExists()
@@ -86,10 +80,40 @@ QString FileProject::autosaveInfo()
 
 void FileProject::setFallbackAttributes()
 {
-    QFileInfo fileInfo(_filePath);
+    QFileInfo fileInfo(_fileInfo.filePath());
     setName(fileInfo.baseName());
     setVersion("0.0");
     setDescription(QString("Project %1 is invalid").arg(name()));
+}
+
+QString FileProject::relativFilePath() const
+{
+    return _relativFilePath;
+}
+
+void FileProject::setRelativFilePath(const QString &relativFilePath)
+{
+    _relativFilePath = relativFilePath;
+}
+
+void FileProject::setAutosaveFilePath(const QString &autosaveFilePath)
+{
+    if(_autosaveFilePath == autosaveFilePath){
+        return;
+    }
+
+    if(isLoaded()){
+        _fileSystemWatcher.disconnect(this);
+        FileHelper::removeFile(_autosaveFilePath);
+    }
+
+    _autosaveFilePath = autosaveFilePath;
+
+    if(isLoaded()){
+        if(autosave()){
+            _fileSystemWatcher.addPath(_autosaveFilePath);
+        }
+    }
 }
 
 bool FileProject::save()
@@ -101,7 +125,7 @@ bool FileProject::save()
         return false;
     }
 
-    if (!FileHelper::testFileOpenMode(_filePath, openMode)) {
+    if (!FileHelper::testFileOpenMode(_fileInfo.filePath(), openMode)) {
         return false;
     }
 
@@ -109,7 +133,7 @@ bool FileProject::save()
         _internalSave = true;
     }
 
-    QFile file(_filePath);
+    QFile file(_fileInfo.filePath());
     file.open(openMode);
     file.write(_domDocument.toByteArray());
     file.close();
@@ -124,7 +148,6 @@ bool FileProject::save()
     return true;
 }
 
-
 bool FileProject::autosave()
 {
     const QIODevice::OpenMode openMode = QIODevice::WriteOnly;
@@ -134,17 +157,16 @@ bool FileProject::autosave()
         return false;
     }
 
-    if (FileHelper::fileExists(_autosaveFilePath) && !FileHelper::testFileOpenMode(_autosaveFilePath, openMode)) {
+    QFile autosaveFile(_autosaveFilePath);
+    if (!FileHelper::fileExists(_autosaveFilePath) && !FileHelper::testFileOpenMode(_autosaveFilePath, openMode)) {
         return false;
     }
 
-    QFile autosaveFile(_autosaveFilePath);
     autosaveFile.open(openMode);
     autosaveFile.write(_domDocument.toByteArray());
     autosaveFile.close();
     return true;
 }
-
 
 void FileProject::reset()
 {
@@ -152,17 +174,17 @@ void FileProject::reset()
     setDirty(false);
     setExternChanged(false);
 
-    if (!FileHelper::fileExists(_filePath)) {
+    if (!FileHelper::fileExists(_fileInfo.filePath())) {
         setLastError(FileHelper::lastError());
         projectIsValid = false;
     }
 
-    if (projectIsValid && !FileHelper::testFileOpenMode(_filePath, QIODevice::ReadWrite)) {
+    if (projectIsValid && !FileHelper::testFileOpenMode(_fileInfo.filePath(), QIODevice::ReadWrite)) {
         setLastError(FileHelper::lastError());
         projectIsValid = false;
     }
 
-    QDomDocument projectDomDocument = FileHelper::domDocumentFromXMLFile(_filePath);
+    QDomDocument projectDomDocument = FileHelper::domDocumentFromXMLFile(_fileInfo.filePath());
 
     if (projectIsValid && !FileHelper::lastError().isEmpty()) {
         setLastError(FileHelper::lastError());
@@ -178,12 +200,22 @@ void FileProject::reset()
 
 QString FileProject::connectionString()
 {
-    return _filePath;
+    return _fileInfo.filePath();
 }
 
 QString FileProject::filePath() const
 {
-    return _filePath;
+    return _fileInfo.filePath();
+}
+
+QString FileProject::fileName() const
+{
+    return _fileInfo.fileName();
+}
+
+QString FileProject::path() const
+{
+    return _fileInfo.path();
 }
 
 QDomDocument FileProject::domDocument() const
@@ -219,6 +251,16 @@ bool FileProject::setDomDocument(const QDomDocument& projectDomDocument)
     return false;
 }
 
+void FileProject::setFilePath(const QString &filePath)
+{
+    if (_fileInfo.filePath() == filePath || filePath.isEmpty()) {
+        return;
+    }
+
+    _fileInfo.setFile(filePath);
+    setAutosaveFilePath(QString("%1/.%2.%3").arg(_fileInfo.absolutePath()).arg(_fileInfo.baseName()).arg(ProFileAutosaveExt));
+}
+
 QDomDocument FileProject::autosaveDomDocument() const
 {
     return _autosaveDomDocument;
@@ -250,7 +292,7 @@ void FileProject::setLoaded(bool isLoaded)
 {
     if (isLoaded) {
         connect(&_fileSystemWatcher, &QFileSystemWatcher::fileChanged, this, &FileProject::onProjectFileChanged);
-        _fileSystemWatcher.addPath(_filePath);
+        _fileSystemWatcher.addPath(_fileInfo.filePath());
     } else {
         _fileSystemWatcher.disconnect(this);
         cleanAutosave();
@@ -261,7 +303,7 @@ void FileProject::setLoaded(bool isLoaded)
 
 void FileProject::onProjectFileChanged()
 {
-    _fileSystemWatcher.addPath(_filePath);
+    _fileSystemWatcher.addPath(_fileInfo.filePath());
 
     if (!isLoaded()) {
         return;
@@ -272,7 +314,7 @@ void FileProject::onProjectFileChanged()
         return;
     }
 
-    if (!compareDomDocumentMD5(_domDocument, FileHelper::domDocumentFromXMLFile(_filePath))) {
+    if (!compareDomDocumentMD5(_domDocument, FileHelper::domDocumentFromXMLFile(_fileInfo.filePath()))) {
         setExternChanged(true);
         emit externDomChange();
     }

@@ -16,12 +16,13 @@ public:
     Q_INVOKABLE SqlWorkspace();
     ~SqlWorkspace();
 
-    void init() override;
-    bool compare(const QSharedPointer<AbstractWorkspace>& otherWorkspace) const override;
-    bool save() override;
-    bool test() override;
-    bool deleteProject(const QSharedPointer<AbstractProject>& project) override;
-    bool deleteWorkspace(bool deleteProjects = false) override;
+    void init() Q_DECL_OVERRIDE;
+    void update() Q_DECL_OVERRIDE;
+    bool compare(const QSharedPointer<AbstractWorkspace>& otherWorkspace) const Q_DECL_OVERRIDE;
+    bool save() Q_DECL_OVERRIDE;
+    bool test() Q_DECL_OVERRIDE;
+    bool deleteProject(const QSharedPointer<AbstractProject>& project) Q_DECL_OVERRIDE;
+    bool deleteWorkspace(bool deleteProjects = false) Q_DECL_OVERRIDE;
 
     int port() const;
     void setPort(int port);

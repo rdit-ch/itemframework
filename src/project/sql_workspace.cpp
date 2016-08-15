@@ -14,6 +14,11 @@ void SqlWorkspace::init()
 
 }
 
+void SqlWorkspace::update()
+{
+
+}
+
 bool SqlWorkspace::save()
 {
     return true;
@@ -35,6 +40,7 @@ bool SqlWorkspace::deleteWorkspace(bool deleteProjects)
     Q_UNUSED(deleteProjects);
     return true;
 }
+
 
 bool SqlWorkspace::compare(const QSharedPointer<AbstractWorkspace>& workspace) const
 {

@@ -14,10 +14,10 @@ AbstractWorkspace::~AbstractWorkspace()
 {
 }
 
-bool AbstractWorkspace::setWorkspaceProperties(const QDomDocument& domDocument, const QString& fallbackName)
+bool AbstractWorkspace::setWorkspaceProperties(const QDomDocument& domDocument)
 {
     if (!validateWorkspaceDomDocument(domDocument)) {
-        setName(fallbackName);
+        qDebug() << lastError();
         return false;
     }
 
@@ -25,11 +25,9 @@ bool AbstractWorkspace::setWorkspaceProperties(const QDomDocument& domDocument, 
     QDomElement const rootElement = workspaceDomDocument.documentElement();
     QString workspaceName = rootElement.attribute(WspDomElmNameAttLabel);
 
-    if (workspaceName.isEmpty()) {
-        workspaceName = fallbackName;
+    if (!workspaceName.isEmpty()) {
+        setName(workspaceName);
     }
-
-    setName(workspaceName);
 
     QString workspaceDescription = rootElement.attribute(WspDomElmDescriptionAttLabel);
     setDescription(workspaceDescription);
@@ -44,6 +42,16 @@ bool AbstractWorkspace::setWorkspaceProperties(const QDomDocument& domDocument, 
     _minorWorkspaceVersion = minorVersion;
 
     return true;
+}
+
+QDomDocument AbstractWorkspace::workspaceDomDocument() const
+{
+    return _workspaceDomDocument;
+}
+
+void AbstractWorkspace::setWorkspaceDomDocument(const QDomDocument &workspaceDomDocument)
+{
+    _workspaceDomDocument = workspaceDomDocument;
 }
 
 void AbstractWorkspace::setConnectionString(const QString& connectionString)
@@ -86,6 +94,11 @@ const QString AbstractWorkspace::lastError() const
     return _lastError;
 }
 
+void AbstractWorkspace::clearLastError()
+{
+    _lastError = "";
+}
+
 void AbstractWorkspace::setLastError(const QString& lastError)
 {
     _lastError = lastError;
@@ -98,7 +111,12 @@ bool AbstractWorkspace::isValid() const
 
 void AbstractWorkspace::setValid(bool isValid)
 {
+    if(_isValid == isValid){
+        return;
+    }
+
     _isValid = isValid;
+    emit isValidChanged(_isValid);
 }
 
 bool AbstractWorkspace::isOpen() const
@@ -134,6 +152,16 @@ void AbstractWorkspace::setProjects(const QVector<QSharedPointer<AbstractProject
 QVector<QSharedPointer<AbstractProject> > AbstractWorkspace::projects() const
 {
     return _projects;
+}
+
+QSharedPointer<AbstractProject> AbstractWorkspace::project(QString connectionString) const
+{
+    for(QSharedPointer<AbstractProject> project : _projects){
+        if(project->connectionString() == connectionString){
+            return project;
+        }
+    }
+    return QSharedPointer<AbstractProject>();
 }
 
 int AbstractWorkspace::projectCount() const
@@ -228,6 +256,10 @@ QDomDocument AbstractWorkspace::workspaceDomDocumentTemplate(const QString& name
 bool AbstractWorkspace::validateWorkspaceDomDocument(const QDomDocument& domDocument)
 {
     QDomDocument const workspaceDomDocument = domDocument;
+    if(workspaceDomDocument.isNull()){
+        return false;
+    }
+
     QDomElement const rootElement = workspaceDomDocument.documentElement();
 
     if (rootElement.isNull() || rootElement.tagName() != WspDomElmTagWsp) {
@@ -281,7 +313,7 @@ bool AbstractWorkspace::validateWorkspaceDomDocument(const QDomDocument& domDocu
 bool AbstractWorkspace::contains(const QSharedPointer<AbstractProject>& project) const
 {
     for (const QSharedPointer<AbstractProject>& importedProject : _projects) {
-        if (importedProject->connectionString() == project->connectionString()) {
+        if (importedProject == project) {
             return true;
         }
     }
@@ -317,6 +349,12 @@ bool AbstractWorkspace::removeProject(const QSharedPointer<AbstractProject>& pro
     }
 
     return false;
+}
+
+bool AbstractWorkspace::removeProjects()
+{
+    _projects.clear();
+    return save();
 }
 
 bool AbstractWorkspace::saveExternChangedProjects() const

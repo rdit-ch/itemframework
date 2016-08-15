@@ -72,7 +72,15 @@ SOURCES     +=  \
                 src/project/projectlist_dockwidget.cpp \
                 src/project/project_save_reminder_dialog.cpp \
                 src/project/sql_workspace_new_dialog.cpp \
-                src/project/file_workspace_edit_dialog.cpp
+                src/project/file_workspace_edit_dialog.cpp \
+                src/project/file_project_edit_dialog.cpp \
+                src/project/wizard_page_workspace_export_type.cpp \
+                src/project/wizard_workspace_export.cpp \
+                src/project/wizard_page_file_system_export.cpp \
+                src/project/wizard_workspace_import.cpp \
+                src/project/wizard_page_workspace_import_type.cpp \
+                src/project/wizard_page_file_system_project_import.cpp
+
 
 HEADERS     +=  \
                 src/gui/gui_main_window.h \
@@ -132,7 +140,18 @@ HEADERS     +=  \
                 src/project/project_save_reminder_dialog.h \
                 src/project/sql_workspace_new_dialog.h \
                 src/project/file_workspace_edit_dialog.h \
-                src/project/project_manager_config.h
+                src/project/project_manager_config.h \
+                src/project/file_project_edit_dialog.h \
+                src/project/wizard_page_workspace_export_type.h \
+                src/project/wizard_workspace_export.h \
+                src/project/wizard_page_file_system_export.h \
+                src/project/wizard_workspace_import.h \
+                src/project/wizard_page_workspace_import_type.h \
+                src/project/wizard_page_file_system_project_import.h \
+                src/project/export_import_helper.h \
+                src/project/wizard_page_config.h
+
+
 
 HEADERS     +=     \
                 include/appcore.h \
@@ -171,7 +190,16 @@ FORMS       +=  \
                 src/project/projectlist_dockwidget.ui \
                 src/project/sql_workspace_new_dialog.ui \
                 src/project/project_changed_extern_dialog.ui \
-                src/project/file_workspace_edit_dialog.ui
+                src/project/file_workspace_edit_dialog.ui \
+                src/project/file_project_edit_dialog.ui \
+                src/project/project_info_dialog.ui \
+                src/project/wizard_page_workspace_export_type.ui \
+                src/project/wizard_workspace_export.ui \
+                src/project/wizard_page_file_system_export.ui \
+                src/project/wizard_workspace_import.ui \
+                src/project/wizard_page_workspace_import_type.ui \
+                src/project/wizard_page_file_system_project_import.ui
+
 
 RESOURCES   +=  src/res/res_core.qrc
 

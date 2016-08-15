@@ -2,6 +2,9 @@
 #define PROJECT_GUI_H
 
 #include <QObject>
+#include <QPoint>
+#include <QDialog>
+#include <QPointer>
 #include <QEnableSharedFromThis>
 
 class ItemView;
@@ -10,6 +13,11 @@ class AbstractWorkspaceGui;
 class ProjectChangedExternDialog;
 class QTimer;
 class QMenu;
+
+namespace Ui
+{
+class ProjectInfoDialog;
+}
 
 class ProjectGui : public QObject, public QEnableSharedFromThis<ProjectGui>
 {
@@ -20,7 +28,7 @@ public:
 
     bool isValid() const;
     bool isLoaded() const;
-
+    bool isFastLoaded() const;
     QSharedPointer<AbstractProject> project() const;
     ItemView* itemView() const;
     void reset();
@@ -36,6 +44,7 @@ public:
     int autosaveTimerInterval() const;
     void setAutosaveTimerInterval(int value);
     void showProjectContextMenue(const QPoint& globalPosition) const;
+    void setDialogPositionOffset(const QPoint &dialogPoistion);
 
 private:
     QTimer* _autosaveTimer = nullptr;
@@ -43,7 +52,7 @@ private:
     bool saveReminder();
     void showProjectChangedByExternalDialog();
     ProjectChangedExternDialog* _projectChangedExternDialog = nullptr;
-    AbstractWorkspaceGui* _abstractWorkspaceGui = nullptr;
+    AbstractWorkspaceGui* _parent = nullptr;
     QSharedPointer<AbstractProject> _project;
     QMenu* _contextMenu = nullptr;
     ItemView* _itemView = nullptr;
@@ -54,13 +63,15 @@ private:
     QString _description;
     bool _domChanged = false;
     QString _lastError;
+    QPoint _dialogPositionOffset;
+    QPointer<QDialog> _projectInfoDialog;
 
 signals:
     void projectGuiLabelChanged(QSharedPointer<ProjectGui> projectGui);
     void projectLoaded(QSharedPointer<ProjectGui> projectGui);
     void projectUnloaded(QSharedPointer<ProjectGui> projectGui);
 
-private slots:
+public slots:
     void onLoadTrigger();
     void onLoadAllTrigger();
     void onUnloadTrigger();
@@ -69,16 +80,19 @@ private slots:
     void onSaveAllTrigger();
     void onRemoveTrigger();
     void onDeleteTrigger();
-    void onAutosaveTimeout();
     void onFastLoad(bool state);
     void showProjectInfo();
-    void onEditTrigger();
+    void onEditTrigger();  
+    void onUnloadAllExceptThisTrigger();
+    void onUnloadAllExceptVisibleTrigger();
+
+private slots:
+    void onAutosaveTimeout();
+    void onMainWindowActivationChanged();
+    bool reloadDomDocument();
     void onItemViewSceneChanged();
     void onExternDomChanged();
     void onStateChanged();
-    void onMainWindowActivationChanged();
-    bool reloadDomDocument();
-    void onUnloadAllExceptThisTrigger();
-    void onUnloadAllExceptVisibleTrigger();
+    void onSearchProject();
 };
 #endif // PROJECT_GUI_H

@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>680</width>
+    <height>400</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Edit Workspace</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -28,12 +28,15 @@
        <property name="readOnly">
         <bool>true</bool>
        </property>
+       <property name="placeholderText">
+        <string>e.g. workspace.twsp</string>
+       </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonBrowseWorkspace">
        <property name="text">
-        <string>&amp;Browse...</string>
+        <string>...</string>
        </property>
       </widget>
      </item>
@@ -124,7 +127,7 @@
          <item>
           <widget class="QPushButton" name="pushButtonSelectWorkspaceDirectory">
            <property name="text">
-            <string>&amp;Browse...</string>
+            <string>...</string>
            </property>
           </widget>
          </item>
@@ -194,13 +197,13 @@
  <connections>
   <connection>
    <sender>buttonCancelDialog</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>FileWorkspaceEditDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>349</x>
-     <y>278</y>
+     <x>439</x>
+     <y>339</y>
     </hint>
     <hint type="destinationlabel">
      <x>199</x>
@@ -210,13 +213,13 @@
   </connection>
   <connection>
    <sender>buttonSaveSelectedWorkspace</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>FileWorkspaceEditDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>263</x>
-     <y>278</y>
+     <x>353</x>
+     <y>339</y>
     </hint>
     <hint type="destinationlabel">
      <x>199</x>
@@ -226,13 +229,13 @@
   </connection>
   <connection>
    <sender>pushButtonBrowseWorkspace</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>FileWorkspaceEditDialog</receiver>
    <slot>showSetWorkspaceFileDialog()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>349</x>
-     <y>40</y>
+     <x>439</x>
+     <y>51</y>
     </hint>
     <hint type="destinationlabel">
      <x>199</x>
@@ -242,17 +245,17 @@
   </connection>
   <connection>
    <sender>pushButtonSelectWorkspaceDirectory</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>FileWorkspaceEditDialog</receiver>
-   <slot>showSetNewWorkspaceFileDialog()</slot>
+   <slot>showFileDialog()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>347</x>
-     <y>108</y>
+     <x>399</x>
+     <y>137</y>
     </hint>
     <hint type="destinationlabel">
-     <x>199</x>
-     <y>149</y>
+     <x>644</x>
+     <y>305</y>
     </hint>
    </hints>
   </connection>
@@ -260,5 +263,6 @@
  <slots>
   <slot>showSetNewWorkspaceFileDialog()</slot>
   <slot>showSetWorkspaceFileDialog()</slot>
+  <slot>showFileDialog()</slot>
  </slots>
 </ui>

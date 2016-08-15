@@ -31,15 +31,22 @@ public:
     bool setAutosaveDomDocument(const QDomDocument& domDocument);
     QDomDocument domDocument() const override;
     bool setDomDocument(const QDomDocument& domDocument) override;
+    void setFilePath(const QString& filePath);
     QString filePath() const;
+    QString fileName() const;
+    QString path() const;
+
+    QString relativFilePath() const;
+    void setRelativFilePath(const QString &relativFilePath);
 
 private:
+    void setAutosaveFilePath(const QString &autosaveFilePath);
     void setFallbackAttributes();
     QDomDocument _domDocument;
     QDomDocument _autosaveDomDocument;
     QFileSystemWatcher _fileSystemWatcher;
-    QString _filePath;
     QString _autosaveFilePath;
+    QString _relativFilePath;
     QFileInfo _fileInfo;
     bool _internalSave = false;
 

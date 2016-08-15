@@ -100,7 +100,7 @@
  <connections>
   <connection>
    <sender>pushButtonClose</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>ProjectChangedExternDialog</receiver>
    <slot>reject()</slot>
    <hints>
@@ -116,7 +116,7 @@
   </connection>
   <connection>
    <sender>pushButtonNo</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>ProjectChangedExternDialog</receiver>
    <slot>accept()</slot>
    <hints>
@@ -132,7 +132,7 @@
   </connection>
   <connection>
    <sender>pushButtonNoToAll</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>ProjectChangedExternDialog</receiver>
    <slot>accept()</slot>
    <hints>
@@ -148,7 +148,7 @@
   </connection>
   <connection>
    <sender>pushButtonYes</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>ProjectChangedExternDialog</receiver>
    <slot>accept()</slot>
    <hints>
@@ -164,7 +164,7 @@
   </connection>
   <connection>
    <sender>pushButtonYesToAll</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>ProjectChangedExternDialog</receiver>
    <slot>accept()</slot>
    <hints>

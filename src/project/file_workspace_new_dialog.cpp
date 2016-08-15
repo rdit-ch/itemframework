@@ -11,13 +11,7 @@ FileWorkspaceNewDialog::FileWorkspaceNewDialog(QString lastUsedPath, QDialog* pa
     _lastUsedPath = lastUsedPath;
 
     if (_lastUsedPath.isEmpty()) {
-        QDir workdirectoryRtv = QDir(HomeFolderRtv);
-
-        if (!workdirectoryRtv.exists()) {
-            workdirectoryRtv.mkdir(workdirectoryRtv.absolutePath());
-        }
-
-        _lastUsedPath = workdirectoryRtv.absolutePath();
+        _lastUsedPath = QDir(HomeFolderUser).absolutePath();
     }
 
     ui->lineEditPath->setText(_lastUsedPath);
@@ -130,14 +124,16 @@ void FileWorkspaceNewDialog::fileDialogRejected()
 void FileWorkspaceNewDialog::accept()
 {
     const QString name = ui->lineEditName->text();
-    const QString file = ui->lineEditFile->text();
-    const QString path = ui->lineEditPath->text();
+    const QString fileName = ui->lineEditFile->text();
+    const QString directory = ui->lineEditPath->text();
     const QString description = ui->textEditDescription->toPlainText();
+    const QString filePath = QString("%1/%2").arg(directory).arg(fileName);
     const bool isDefault = ui->checkBoxDefault->isChecked();
 
     _data->name = name;
-    _data->file = file;
-    _data->directory = path;
+    _data->filePath = filePath;
+    _data->fileName = fileName;
+    _data->directory = directory;
     _data->description = description;
     _data->isDefault = isDefault;
 

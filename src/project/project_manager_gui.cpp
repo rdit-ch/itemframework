@@ -8,6 +8,7 @@
 #include "project_manager.h"
 #include "project_manager_config.h"
 #include <QMenu>
+#include <QAction>
 
 
 STARTUP_ADD_SINGLETON(ProjectManagerGui)
@@ -42,13 +43,13 @@ ProjectManagerGui::ProjectManagerGui()
 
     // Submenu to switch workspace fast. The Pixmap (icon) shows the current workspace.
     _menuWorkspaces = new QMenu(0);
-    _menuePointSelected = QPixmap(6, 6);
+    _menuePointSelected = QPixmap(4, 4);
     _menuePointSelected.fill(Qt::black);
-
 
     // Set Main gui elements and connect them.
     setMainGuiElements();
 
+    connect(_itemViewTabWidget->tabBar(), &QTabWidget::customContextMenuRequested, this, &ProjectManagerGui::customContextMenuRequested);
     connect(_projectManager, &ProjectManager::recentWorkspaceListChanged, this, &ProjectManagerGui::onRecentWorkspaceListChanged);
     _projectManager->initRecentWorkspaces();
 }
@@ -94,9 +95,9 @@ AbstractWorkspaceGui* ProjectManagerGui::abstractWorkspaceGuiClass(
     const QVector<AbstractWorkspaceGui*>& workspaceGuis)
 {
     // Find correct parent workspace gui class.
-    for (AbstractWorkspaceGui* abstractWorkspaceGui : workspaceGuis) {
-        if (abstractWorkspaceGui->isTypeFriendly(workspace)) {
-            return abstractWorkspaceGui;
+    for (AbstractWorkspaceGui* workspaceGui : workspaceGuis) {
+        if (workspaceGui->isTypeFriendly(workspace)) {
+            return workspaceGui;
         }
     }
 
@@ -107,31 +108,42 @@ AbstractWorkspaceGui* ProjectManagerGui::abstractWorkspaceGuiClass(
 void ProjectManagerGui::updateMenuEntries()
 {
     // Get main menu entry "Workspaces".
-    QAction* actionWorkspaces = Gui_Manager::instance()->get_action("Workspaces");
+    QAction* actionWorkspaces = Gui_Manager::instance()->get_action("Switch Workspace...");
+    const QSharedPointer<AbstractWorkspace> currentWorkspace = _projectManager->currentWorkspace();
     _menuWorkspaces->clear();
     _menuWorkspaces->setTitle(actionWorkspaces->text());
 
     // Rebuild submenu to switch workspace fast.
-    for (const QSharedPointer<AbstractWorkspace> abstractWorkspace : _projectManager->recentWorkspaces()) {
+    for (const QSharedPointer<AbstractWorkspace> workspace : _projectManager->recentWorkspaces()) {
 
-        if (abstractWorkspace->isValid()) {
-            // Create new qaction for every recent used workspace.
-            QAction* action = new QAction(abstractWorkspace->name(), _menuWorkspaces);
-            // Store abstract workspace as qvariant data in qaction object.
-            action->setData(QVariant::fromValue(abstractWorkspace));
+        // Create new qaction for every recent used workspace.
+        QAction* action = new QAction(workspace->name(), _menuWorkspaces);
+        // Store abstract workspace as qvariant data in qaction object.
+        action->setData(QVariant::fromValue(workspace));
 
-            if (!_projectManager->currentWorkspace().isNull() && abstractWorkspace->compare(_projectManager->currentWorkspace())) {
-                // If workspace is "current workspace" then mark entry (black square pixmap icon).
-                action->setIcon(QIcon(_menuePointSelected));
-            }
-
-            // Connect action trigger to switch workspace.
-            connect(action, &QAction::triggered, this, &ProjectManagerGui::onSwitchWorkspaceAction);
-            // Add action to submenu "Workspaces".
-            _menuWorkspaces->addAction(action);
+        if (!currentWorkspace.isNull() && workspace->compare(currentWorkspace)) {
+            // If workspace is "current workspace" then mark entry (black square pixmap icon).
+            action->setIcon(QIcon(_menuePointSelected));
         }
+
+        // Connect action trigger to switch workspace.
+        connect(action, &QAction::triggered, this, &ProjectManagerGui::onSwitchWorkspaceAction);
+
+        if (!workspace->isValid()) {
+            action->setDisabled(true);
+            action->setToolTip(workspace->lastError());
+        }
+
+        // Add action to submenu "Workspaces".
+        _menuWorkspaces->addAction(action);
     }
 
+    if(!currentWorkspace.isNull()){
+         AbstractWorkspaceGui* abstractWorkspaceGui = abstractWorkspaceGuiClass(currentWorkspace, _abstractWorkspaceGuiClasses);
+         if(abstractWorkspaceGui != nullptr){
+            abstractWorkspaceGui->setSwitchWorkspaceMenu(_menuWorkspaces);
+         }
+    }
     // Set updated submenu to switch workspace fast to main menu entry "Workspaces"
     actionWorkspaces->setMenu(_menuWorkspaces);
 }
@@ -148,7 +160,7 @@ bool ProjectManagerGui::start()
         if (openWorkspace(workspace)) {
             defaultWorkspaceSet = true;
         } else {
-            QMessageBox::warning(0, tr("Loading workspace."), QString("Error open Workspace %1.\n%2.").
+            QMessageBox::warning(0, tr("Loading workspace."), QString("Error open Workspace %1.\n%2").
                                  arg(workspace->name()).
                                  arg(lastError()), QMessageBox::Ok);
         }
@@ -196,10 +208,10 @@ int ProjectManagerGui::showSelectWorkspaceDialog()
                         workspace->setDefault(false);
                     }
                 }
-            }
 
-            // Save changes to recentUsedWorkspaces file.
-            _projectManager->saveRecentWorkspacesSettings();
+                // Save changes to recentUsedWorkspaces file.
+                _projectManager->saveRecentWorkspacesSettings();
+            }
         } else {
             // switchWorkspace function generated an error.
             workspaceDialogCode = -1;
@@ -213,83 +225,81 @@ int ProjectManagerGui::showSelectWorkspaceDialog()
 bool ProjectManagerGui::openWorkspace(QSharedPointer<AbstractWorkspace> workspace)
 {
     if (workspace.isNull()) {
-        _lastError = QString("Workspace is null.");
+        _lastError = tr("Workspace is null.");
         return false;
-    } else {
-        _lastError.clear();
     }
 
+    _lastError.clear();
+
     if (!workspace->test()) {
-        _lastError = QString("Workspace %1 test not passed. %2").
-                     arg(workspace->name()).
-                     arg(workspace->lastError());
+        _lastError = workspace->lastError();
         return false;
-    } else {
-        _lastError.clear();
     }
+    _lastError.clear();
 
     // Close current workspace
     QSharedPointer<AbstractWorkspace> currentWorkspace = _projectManager->currentWorkspace();
+    AbstractWorkspaceGui* abstractWorkspaceGui = nullptr;
 
     if (!currentWorkspace.isNull()) {
         if (currentWorkspace->compare(workspace)) {
-            _lastError = QString("Workspace %1 is already open").arg(workspace->name());
+            _lastError = tr("Workspace %1 is already open").arg(workspace->name());
             return false;
-        } else {
-            _lastError.clear();
         }
 
+        _lastError.clear();
+
         if (!closeWorkspace()) {
-            _lastError = QString("Could not close Workspace %1.").arg(workspace->name());
+            _lastError = tr("Could not close Workspace %1.").arg(workspace->name());
             return false;
-        } else {
-            _lastError.clear();
+        }
+
+        _lastError.clear();
+        abstractWorkspaceGui = abstractWorkspaceGuiClass(currentWorkspace, _abstractWorkspaceGuiClasses);
+        if (abstractWorkspaceGui != nullptr) {
+            disconnect(abstractWorkspaceGui, &AbstractWorkspaceGui::switchWorkspace, this, &ProjectManagerGui::onSwitchWorkspaceAction);
         }
     }
 
     // Link new workspace to gui workspace class
-    AbstractWorkspaceGui* abstractWorkspaceGui = abstractWorkspaceGuiClass(workspace, _abstractWorkspaceGuiClasses);
+    abstractWorkspaceGui = abstractWorkspaceGuiClass(workspace, _abstractWorkspaceGuiClasses);
 
     if (abstractWorkspaceGui == nullptr) {
-        _lastError = QString("No present WorkspaceGui class was matched with Workspace %1.").arg(workspace->name());
+        _lastError = tr("No present WorkspaceGui class was matched with Workspace %1.").arg(workspace->name());
         return false;
-    } else {
-        _lastError.clear();
     }
+
+    _lastError.clear();
 
     // Open workspace.
     if (!abstractWorkspaceGui->openWorkspace(workspace)) {
-        _lastError = QString("Error open Workspace %1.").arg(workspace->name());
+        _lastError = tr("Error open Workspace %1.").arg(workspace->name());
         return false;
-    } else {
-        _lastError.clear();
     }
 
-    // Set current workspace
-    _projectManager->setCurrentWorkspace(workspace);
+    _lastError.clear();
 
+    // Set current workspace, update menu and connect workspace to switch workspace slot
+    _projectManager->setCurrentWorkspace(workspace);
     updateMenuEntries();
+    connect(abstractWorkspaceGui, &AbstractWorkspaceGui::switchWorkspace, this, &ProjectManagerGui::onSwitchWorkspaceAction);
     return true;
 }
 
 bool ProjectManagerGui::closeWorkspace()
 {
     QSharedPointer<AbstractWorkspace> workspace = _projectManager->currentWorkspace();
-
     if (!workspace.isNull()) {
         AbstractWorkspaceGui* abstractWorkspaceGui = abstractWorkspaceGuiClass(workspace, _abstractWorkspaceGuiClasses);
 
         if (abstractWorkspaceGui == nullptr) {
             return false;
         }
-
         return abstractWorkspaceGui->closeWorkspace();
     }
 
     return true;
 }
-
-
 
 QString ProjectManagerGui::lastError() const
 {
@@ -329,12 +339,32 @@ void ProjectManagerGui::onWorkspaceNameChanged(const QString& workspaceName)
     updateMenuEntries();
 }
 
+void ProjectManagerGui::onWorkspaceUpdated()
+{
+    _projectManager->saveRecentWorkspacesSettings();
+}
+
 void ProjectManagerGui::onRecentWorkspaceListChanged()
 {
     for (const QSharedPointer<AbstractWorkspace> abstractWorkspace : _projectManager->recentWorkspaces()) {
         connect(abstractWorkspace.data(), &AbstractWorkspace::workspaceNameChanged,
                 this, &ProjectManagerGui::onWorkspaceNameChanged, Qt::UniqueConnection);
+        connect(abstractWorkspace.data(), &AbstractWorkspace::workspaceUpdated,
+                this, &ProjectManagerGui::onWorkspaceUpdated, Qt::UniqueConnection);
     }
 
     updateMenuEntries();
+}
+
+void ProjectManagerGui::customContextMenuRequested(const QPoint position)
+{
+    QWidget* tabWidget = _itemViewTabWidget->widget(_itemViewTabWidget->tabBar()->tabAt(position));
+
+    if (tabWidget != nullptr) {
+         _itemViewTabWidget->setCurrentWidget(tabWidget);
+        // Get project from QVariant Data property - Qt::UserRole
+        QSharedPointer<ProjectGui> projectGui = tabWidget->property(itemViewWidgetPropertyLabel).value<QSharedPointer<ProjectGui>>();
+        // Show project context menue
+        projectGui->showProjectContextMenue(_itemViewTabWidget->mapToGlobal(position));
+    }
 }

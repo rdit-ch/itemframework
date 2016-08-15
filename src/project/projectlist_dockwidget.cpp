@@ -5,24 +5,24 @@
 #include "abstract_project.h"
 #include "project/project_manager.h"
 
-ProjectListDockWidget::ProjectListDockWidget() : QDockWidget(), ui(new Ui::ProjectListDockWidget)
+ProjectListDockWidget::ProjectListDockWidget() : QDockWidget(), _ui(new Ui::ProjectListDockWidget)
 {
-    ui->setupUi(this);
-    ui->listWidgetProjects->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->listWidgetProjects, &QListWidget::customContextMenuRequested, this, &ProjectListDockWidget::customContextMenuRequested);
+    _ui->setupUi(this);
+    _ui->listWidgetProjects->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(_ui->listWidgetProjects, &QListWidget::customContextMenuRequested, this, &ProjectListDockWidget::customContextMenuRequested);
 }
 
 ProjectListDockWidget::~ProjectListDockWidget()
 {
-    delete ui;
+    delete _ui;
 }
 
 QVector<QSharedPointer<ProjectGui>> ProjectListDockWidget::projectGuis() const
 {
     QVector<QSharedPointer<ProjectGui>> projectGuis;
 
-    for (int i = 0; i < ui->listWidgetProjects->count(); ++i) {
-        QListWidgetItem* item = ui->listWidgetProjects->item(i);
+    for (int i = 0; i < _ui->listWidgetProjects->count(); ++i) {
+        QListWidgetItem* item = _ui->listWidgetProjects->item(i);
         projectGuis.append(item->data(Qt::UserRole).value<QSharedPointer<ProjectGui>>());
     }
 
@@ -33,8 +33,8 @@ QVector<QSharedPointer<ProjectGui> > ProjectListDockWidget::dirtyProjects() cons
 {
     QVector<QSharedPointer<ProjectGui>> projectGuis;
 
-    for (int i = 0; i < ui->listWidgetProjects->count(); ++i) {
-        QListWidgetItem* item = ui->listWidgetProjects->item(i);
+    for (int i = 0; i < _ui->listWidgetProjects->count(); ++i) {
+        QListWidgetItem* item = _ui->listWidgetProjects->item(i);
         QSharedPointer<ProjectGui> projectGui = item->data(Qt::UserRole).value<QSharedPointer<ProjectGui>>();
 
         if (projectGui->project()->isDirty()) {
@@ -50,8 +50,8 @@ QVector<QListWidgetItem*> ProjectListDockWidget::listWidgetItems() const
 {
     QVector<QListWidgetItem*> listWidgetItems;
 
-    for (int i = 0; i < ui->listWidgetProjects->count(); ++i) {
-        listWidgetItems.append(ui->listWidgetProjects->item(i));
+    for (int i = 0; i < _ui->listWidgetProjects->count(); ++i) {
+        listWidgetItems.append(_ui->listWidgetProjects->item(i));
     }
 
     return listWidgetItems;
@@ -62,7 +62,7 @@ void ProjectListDockWidget::addProject(const QSharedPointer<ProjectGui>& project
     QListWidgetItem* item = new QListWidgetItem(projectGui->project()->name());
     item->setData(Qt::UserRole, QVariant::fromValue(projectGui));
     item->setToolTip(projectGui->project()->connectionString());
-    ui->listWidgetProjects->addItem(item);
+    _ui->listWidgetProjects->addItem(item);
 
 }
 
@@ -77,13 +77,13 @@ void ProjectListDockWidget::removeAllProjects()
 {
     QSharedPointer<ProjectGui> project;
 
-    for (int i = 0; i < ui->listWidgetProjects->count(); ++i) {
-        project = ui->listWidgetProjects->item(i)->data(Qt::UserRole).value<QSharedPointer<ProjectGui>>();
+    for (int i = 0; i < _ui->listWidgetProjects->count(); ++i) {
+        project = _ui->listWidgetProjects->item(i)->data(Qt::UserRole).value<QSharedPointer<ProjectGui>>();
         disconnect(project.data());
-        delete ui->listWidgetProjects->takeItem(i);
+        delete _ui->listWidgetProjects->takeItem(i);
     }
 
-    ui->listWidgetProjects->clear();
+    _ui->listWidgetProjects->clear();
 }
 
 bool ProjectListDockWidget::removeProject(const QSharedPointer<ProjectGui>& projectGui)
@@ -91,12 +91,12 @@ bool ProjectListDockWidget::removeProject(const QSharedPointer<ProjectGui>& proj
     bool removed = false;
     QSharedPointer<ProjectGui> project;
 
-    for (int i = 0; i < ui->listWidgetProjects->count(); ++i) {
-        project = ui->listWidgetProjects->item(i)->data(Qt::UserRole).value<QSharedPointer<ProjectGui>>();
+    for (int i = 0; i < _ui->listWidgetProjects->count(); ++i) {
+        project = _ui->listWidgetProjects->item(i)->data(Qt::UserRole).value<QSharedPointer<ProjectGui>>();
 
         if (project == projectGui) {
             disconnect(project.data());
-            delete ui->listWidgetProjects->takeItem(i);
+            delete _ui->listWidgetProjects->takeItem(i);
             removed = true;
             break;
         }
@@ -105,20 +105,51 @@ bool ProjectListDockWidget::removeProject(const QSharedPointer<ProjectGui>& proj
     return removed;
 }
 
-void ProjectListDockWidget::customContextMenuRequested(const QPoint& clickPosition)
+bool ProjectListDockWidget::contains(const QSharedPointer<ProjectGui> &projectGui)
 {
-    // Set listwidget item on clicked position
-    QListWidgetItem* selectedItem = ui->listWidgetProjects->itemAt(clickPosition);
-    QPoint globalClickPosition = ui->listWidgetProjects->mapToGlobal(clickPosition);
+    for (int i = 0; i < _ui->listWidgetProjects->count(); ++i) {
+        auto project = _ui->listWidgetProjects->item(i)->data(Qt::UserRole).value<QSharedPointer<ProjectGui>>();
 
-    // Check if a listwidget item is selected if not show the workspace context menue
-    if (selectedItem != nullptr) {
-        // Get project from QVariant Data property - Qt::UserRole
-        const QSharedPointer<ProjectGui> project = selectedItem->data(Qt::UserRole).value<QSharedPointer<ProjectGui>>();
-        // Show project context menue
-        showProjectContextMenu(globalClickPosition, project);
-    } else {
-        emit showWorkspaceContextMenu(globalClickPosition);
+        if (project == projectGui) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void ProjectListDockWidget::customContextMenuRequested(const QPoint& position)
+{
+    QList<QListWidgetItem*> selectedItems = _ui->listWidgetProjects->selectedItems();
+    QListWidgetItem* selectedItem = _ui->listWidgetProjects->itemAt(position);
+    QPoint globalPosition = _ui->listWidgetProjects->mapToGlobal(position);
+
+    // Set specific menue request (workspace = 0, project = 1, multi project = >1).
+    int menuRequest = 0;
+    if(selectedItem != nullptr){
+        menuRequest = selectedItems.count();
+    }
+
+    switch (menuRequest) {
+    case 0:
+        // No Listwidget items are selected
+        for(QListWidgetItem* item : _ui->listWidgetProjects->selectedItems()) {
+            item->setSelected(false);
+        }
+        emit showWorkspaceContextMenu(globalPosition);
+        break;
+    case 1:
+        // 1 Listwidget item is selected
+        showProjectContextMenu(globalPosition, selectedItem->data(Qt::UserRole).value<QSharedPointer<ProjectGui>>());
+        break;
+    default:
+        // >1 Listwidget items are selected
+        QList<QSharedPointer<ProjectGui>> projectGuis;
+        for(QListWidgetItem* item : selectedItems){
+            projectGuis.append(item->data(Qt::UserRole).value<QSharedPointer<ProjectGui>>());
+        }
+        emit showMultiProjectContextMenu(globalPosition, projectGuis);
+        break;
     }
 }
 

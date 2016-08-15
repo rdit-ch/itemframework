@@ -30,6 +30,21 @@ public:
      */
     static bool fileExists(const QString& filePath);
 
+
+    static bool directoryIsReadable(const QString& directoryPath);
+
+
+    static bool directoryIsWritable(const QString& directoryPath);
+
+    /**
+     * @return Returns \c true if the directory exists, otherwise returns \c false.
+     *
+     * @param directoryPath The directoryPath as string.
+     *
+     * \sa fileExists
+     */
+    static bool directoryExists(const QString& directoryPath);
+
     /**
      * @return Returns \c true if the file was removed or does not exists, otherwise returns \c false.
      *
@@ -61,9 +76,9 @@ public:
     static QDomDocument domDocumentFromXMLFile(const QString& filePath);
 
 
-    static QString relativeToAbsoluteFilePath(const QString& fileNameFrom, const QString& fileNameTo);
+    static QString relativeToAbsoluteFilePath(const QString& filePathFrom, const QString& filePathTo);
 
-    static QString absoluteToRelativeFilePath(const QString& fileNameFrom, const QString& fileNameTo);
+    static QString absoluteToRelativeFilePath(const QString& filePathFrom, const QString& filePathTo);
 };
 
 #endif // FILEHELPER_H

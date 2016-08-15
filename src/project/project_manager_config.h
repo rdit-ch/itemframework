@@ -37,7 +37,7 @@
 
 // Dir Locations
 #define HomeFolderUser  QStandardPaths::writableLocation(QStandardPaths::HomeLocation)
-#define HomeFolderRtv   HomeFolderUser + QStringLiteral("/rtv")
+#define TravizWorkDirectory  "settingWorkDirectory"
 
 // File extensions
 #define WspFileExt  "twsp"

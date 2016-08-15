@@ -26,10 +26,15 @@ public:
     virtual QString workspaceTypeName() const = 0;
     virtual void addListWidgetItem(QListWidget* parentListWidget) = 0;
     virtual bool isTypeFriendly(const QSharedPointer<AbstractWorkspace>& workspace) const = 0;
-    virtual bool removeProject(const QSharedPointer<ProjectGui>& projectGui) = 0;
-    virtual bool deleteProject(const QSharedPointer<ProjectGui>& projectGui) = 0;
+    virtual bool removeProject(const QSharedPointer<ProjectGui>& projectGui, bool showMessagebox = true) = 0;
+    virtual bool deleteProject(const QSharedPointer<ProjectGui>& projectGui, bool showMessagebox = true) = 0;
+    virtual void editProject(QSharedPointer<ProjectGui> projectGui) = 0;
     virtual bool saveExternChangedProjects() = 0;
     virtual void resetExternChangedProjects() = 0;
+    virtual void showChangeSourceDialog(const QSharedPointer<AbstractWorkspace>& workspace) = 0;
+    virtual bool exportToFileSystem(QString exportPath, ExportOptions options, QVector<QSharedPointer<AbstractProject>> projects) = 0;
+    virtual void searchProjectSource(QSharedPointer<ProjectGui> projectGui) = 0;
+    virtual void createProjectsFromImport(const QStringList& projectPaths, bool overwrite = false) = 0;
 
     QSharedPointer<AbstractWorkspace> workspace() const;
     void setItemViewTabWidget(QTabWidget* itemViewTabWidget);
@@ -43,10 +48,14 @@ public:
     bool closeWorkspace();
     void addProjectGui(const QSharedPointer<ProjectGui>& projectGui);
     bool loadProject(const QSharedPointer<ProjectGui>& projectGui);
-    bool unloadProject(const QSharedPointer<ProjectGui>& projectGui);
+    bool unloadProject(const QSharedPointer<ProjectGui>& projectGui, bool saveReminder=true);
     bool unloadProjects(const QVector<QSharedPointer<ProjectGui>>& projectGui);
     bool unloadAllProjectsExceptThis(const QSharedPointer<ProjectGui>& projectGui);
     bool unloadAllProjectsExceptVisible();
+    QMenu* switchWorkspaceMenu() const;
+    void setSwitchWorkspaceMenu(QMenu* switchWorkspaceMenu);
+
+    QSharedPointer<ProjectGui> projectGui(const QSharedPointer<AbstractProject>& project);
 
 private:
     void setWorkspace(const QSharedPointer<AbstractWorkspace>& workspace);
@@ -68,6 +77,7 @@ protected:
     ProjectListDockWidget* _projectListDockWidget = nullptr;
     QTabWidget* _itemViewTabWidget = nullptr;
     ProjectManager* _projectManager = nullptr;
+    QMenu* _switchWorkspaceMenu = nullptr;
 
     virtual void onProjectLoad(const QSharedPointer<ProjectGui>& projectGui);
     virtual void onProjectUnload(const QSharedPointer<ProjectGui>& projectGui);
@@ -75,6 +85,7 @@ protected:
 signals:
     void acceptWorkspace(QSharedPointer<AbstractWorkspace> workspace);
     void showContextMenu(const QPoint& position);
+    void switchWorkspace();
 
 private slots:
     void closeProjectTabWidget(int tabIndex);
@@ -82,11 +93,16 @@ private slots:
 
 
 public slots:
-    void customContextMenuRequested(const QPoint& position);
+    void workspaceMenuRequested(const QPoint& position);
+    void multiProjectMenuRequested(const QPoint& position, const QList<QSharedPointer<ProjectGui>> projectGuis);
     void onSaveProject();
     void onSaveAllProjects();
     void onUnloadAllProjects();
     void onLoadAllProjects();
+    void onRemoveSelectedProjects();
+    void onDeleteSelectedProjects();
+    void onUnloadAllProjectsExceptSelected();
+    void onEnableFastLoadForSelected(bool enable);
 
 };
 #endif // ABSTRACT_WORKSPACE_GUI_H

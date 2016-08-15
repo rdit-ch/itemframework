@@ -39,17 +39,18 @@ private:
 
     void setSelectedWorkspace(const QSharedPointer<AbstractWorkspace>& workspace);
     void clearSelectedWorkspace();
-    void showContextMenuRecentWorkspace(const QPoint& position, const QSharedPointer<AbstractWorkspace>& workspace);
+    void showContextMenu(const QPoint& position, const QSharedPointer<AbstractWorkspace>& workspace);
     QDialog* createDialogWorkspaceGui(const WorkspaceGuiType workspaceGuiType, const QVector<AbstractWorkspaceGui*> workspaceGuiVector);
 
-    QList<QTreeWidgetItem*> treeWidgetItems() const;
-    Ui::SelectWorkspaceDialog* ui;
+    QVector<QTreeWidgetItem*> treeWidgetItems() const;
+    Ui::SelectWorkspaceDialog* _ui;
     ProjectManager* _projectManager = nullptr;
     QSharedPointer<AbstractWorkspace> _selectedWorkspace;
     QVector<AbstractWorkspaceGui*> _workspaceGuiVector;
 
 private slots:
     void setRecentUsedWorkspaces();
+    void searchRecentUsedWorkspaces();
     void customContextMenuRequested(const QPoint& position);
     void acceptWorkspace(QSharedPointer<AbstractWorkspace> selectedWorkspace);
     void recentWorkspaceSelected(QTreeWidgetItem* item, int column);
@@ -61,8 +62,6 @@ private slots:
     void deleteWorkspace();
     void recentUsedWorkspaceSelectionChanged();
     void defaultWorkspaceChange(bool checked);
-    void onWorkspaceNameChanged(const QString& workspaceName);
-    void onWorkspaceConnectionChanged(const QString& workspaceConnection);
-    void onWorkspaceDescriptionChanged(const QString& workspaceName);
+    void onWorkspaceUpdated();
 };
 #endif // SELECT_WORKSPACE_DIALOG_H

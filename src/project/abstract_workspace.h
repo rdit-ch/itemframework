@@ -11,6 +11,7 @@
 #include <QDate>
 #include <QVector>
 #include "abstract_project.h"
+#include "export_import_helper.h"
 
 /**
  * The AbstractWorkspace class defines a functional basic class for e.g. a file and sql
@@ -32,6 +33,12 @@ public:
      * This function must be called, otherwise the workspace can't be valid.
      */
     virtual void init() = 0;
+
+    /**
+     * @brief
+     *
+     */
+    virtual void update() = 0;
 
     /**
      * @brief Compare a other Workspace source with this Workspace source (not the Object adress).
@@ -78,6 +85,8 @@ public:
     void resetExternChangedProjects() const;
 
     bool removeProject(const QSharedPointer<AbstractProject>& project);
+
+    bool removeProjects();
 
     /**
      * @brief This static function creates a clean workspace DomDocument.
@@ -221,6 +230,17 @@ public:
     QVector<QSharedPointer<AbstractProject>> projects() const;
 
     /**
+     * @return Returns the project based on his connectionString. Returns a Null QSharedPointer,
+     * if connectionString did not match.
+     *
+     * \sa setProjects
+     * \sa projectCount
+     * \sa projects
+     * \sa connectionString
+     */
+    QSharedPointer<AbstractProject> project(QString connectionString) const;
+
+    /**
      * @brief Set the vector of projects for a workspace.
      *
      * @param projects The vector of shared pointer to projects.
@@ -283,7 +303,7 @@ public:
      *
      * \sa isOpen
      */
-    void setOpen(bool isOpen);
+    virtual void setOpen(bool isOpen);
 
     /**
      * @return Returns the metaObject className.
@@ -309,13 +329,19 @@ public:
      * @return Returns the last occured error as a string.
      */
     const QString lastError() const;
+    void clearLastError();
 
     QString lastUsedDateTime() const;
+
     void setLastUsedDateTime(const QString& lastUsedDateTime);
 
     bool contains(const QSharedPointer<AbstractProject>& project) const;
 
     bool addProject(const QSharedPointer<AbstractProject>& project);
+
+    QDomDocument workspaceDomDocument() const;
+
+
 
 protected:
     /**
@@ -353,7 +379,9 @@ protected:
      *
      * @return Returns \c true if the workspace properties are set and workspace is valid, otherwise it returns \c false.
      */
-    bool setWorkspaceProperties(const QDomDocument& domDocument, const QString& fallbackName);
+    bool setWorkspaceProperties(const QDomDocument& domDocument);
+
+    void setWorkspaceDomDocument(const QDomDocument &workspaceDomDocument);
 
 private:
     QScopedPointer<SettingsScope> _settingsScope;
@@ -370,8 +398,11 @@ private:
     int _majorWorkspaceVersion = -1;
     int _minorWorkspaceVersion = -1;
     QDateTime _lastUsedDateTime;
+    QDomDocument _workspaceDomDocument;
 
 signals:
+    void workspaceUpdated();
+    void isValidChanged(bool isValid);
     void workspaceNameChanged(const QString& workspaceName);
     void workspaceConnectionChanged(const QString& workspaceConnection);
     void workspaceDescriptionChanged(const QString& workspaceDescription);

@@ -8,6 +8,8 @@
 #include "abstract_workspace_gui.h"
 #include "project_changed_extern_dialog.h"
 #include "project_manager_config.h"
+#include "file_project_edit_dialog.h"
+#include "ui_project_info_dialog.h"
 #include <QTimer>
 #include <QInputDialog>
 
@@ -16,7 +18,7 @@ ProjectGui::ProjectGui(AbstractWorkspaceGui* parent, QSharedPointer<AbstractProj
     _autosaveTimer = new QTimer(this);
     _autosaveTimer->setInterval(AutosaveInerval);
     _projectChangedExternDialog = new ProjectChangedExternDialog();
-    _abstractWorkspaceGui = parent;
+    _parent = parent;
     _project = project;
     _projectGuiLabel = _project->name();
     _projectName = _project->name();
@@ -43,27 +45,32 @@ ProjectGui::~ProjectGui()
 void ProjectGui::showProjectContextMenue(const QPoint& globalPosition) const
 {
     QMenu projectContextMenue;
-    QAction* loadProject = projectContextMenue.addAction(QString("Open \"%1\"").arg(_projectGuiLabel));
-    QAction* fastLoadProject = projectContextMenue.addAction(QString("Open \"%1\" directly").arg(_projectGuiLabel));
+    QAction* loadProject = projectContextMenue.addAction(tr("Open \"%1\"").arg(_projectGuiLabel));
+    QAction* fastLoadProject = projectContextMenue.addAction(tr("Open \"%1\" directly").arg(_projectGuiLabel));
     fastLoadProject->setCheckable(true);
     projectContextMenue.addAction(projectContextMenue.addSeparator());
 
-    QAction* saveProject = projectContextMenue.addAction(QString("Save \"%1\"").arg(_projectGuiLabel));
-    QAction* saveAllProjects = projectContextMenue.addAction(QLatin1String("Save All"));
+    QAction* saveProject = projectContextMenue.addAction(tr("Save \"%1\"").arg(_projectGuiLabel));
+    QAction* saveAllProjects = projectContextMenue.addAction(tr("Save All"));
     projectContextMenue.addAction(projectContextMenue.addSeparator());
 
-    QAction* unloadProject = projectContextMenue.addAction(QString("Close \"%1\"").arg(_project->name()));
-    QAction* unloadAllExceptThisProject = projectContextMenue.addAction(QString("Close All Except \"%1\"").arg(_project->name()));
-    QAction* unloadAllExceptVisibleProjects = projectContextMenue.addAction(QString("Close All Except Visible"));
-    QAction* unloadAllProjects = projectContextMenue.addAction(QLatin1String("Close All"));
+    QAction* unloadProject = projectContextMenue.addAction(tr("Close \"%1\"").arg(_project->name()));
+    QAction* unloadAllExceptThisProject = projectContextMenue.addAction(tr("Close All Except \"%1\"").arg(_project->name()));
+    QAction* unloadAllExceptVisibleProjects = projectContextMenue.addAction(tr("Close All Except Visible"));
+    QAction* unloadAllProjects = projectContextMenue.addAction(tr("Close All"));
     projectContextMenue.addAction(projectContextMenue.addSeparator());
 
-    QAction* removeProject = projectContextMenue.addAction(QString("Remove Project \"%1\" from Workspace").arg(_project->name()));
-    QAction* deleteProject = projectContextMenue.addAction(QString("Delete Project \"%1\"").arg(_project->name()));
+    QAction* removeProject = projectContextMenue.addAction(tr("Remove Project \"%1\" from Workspace").arg(_project->name()));
+    QAction* deleteProject = projectContextMenue.addAction(tr("Delete Project \"%1\"").arg(_project->name()));
     projectContextMenue.addAction(projectContextMenue.addSeparator());
 
-    QAction* editProject = projectContextMenue.addAction(QString("Edit Project..."));
-    QAction* infoProject = projectContextMenue.addAction(QString("Project Info"));
+    QAction* editProject = projectContextMenue.addAction(tr("Edit Project..."));
+    QAction* infoProject = projectContextMenue.addAction(tr("Project Info"));
+
+    if(!isValid()){
+        QAction* actionSearchProject = projectContextMenue.addAction(QString("Search '%1'...").arg(_project->name()));
+        connect(actionSearchProject, &QAction::triggered, this, &ProjectGui::onSearchProject);
+    }
 
     connect(fastLoadProject, &QAction::toggled, this, &ProjectGui::onFastLoad);
     connect(saveAllProjects, &QAction::triggered, this, &ProjectGui::onSaveAllTrigger);
@@ -80,14 +87,13 @@ void ProjectGui::showProjectContextMenue(const QPoint& globalPosition) const
     connect(deleteProject, &QAction::triggered, this, &ProjectGui::onDeleteTrigger);
     connect(editProject, &QAction::triggered, this, &ProjectGui::onEditTrigger);
 
-    if (_isLoaded) {
-        loadProject->setEnabled(false);
-    } else {
-        unloadProject->setEnabled(false);
-    }
-
     if (_project->isFastLoad()) {
         fastLoadProject->setChecked(true);
+    }
+
+    if(!_project->isValid()){
+        editProject->setDisabled(true);
+        infoProject->setDisabled(true);
     }
 
     projectContextMenue.exec(globalPosition);
@@ -135,7 +141,7 @@ bool ProjectGui::saveReminder()
     if (_project->isDirty()) {
         QMessageBox saveReminder;
         saveReminder.setIcon(QMessageBox::Question);
-        saveReminder.setText("The project " + _project->name() + " has been modified.");
+        saveReminder.setText(tr("The project \"%1\" has been modified.").arg(_project->name()));
         saveReminder.setInformativeText("Do you want to save your changes?");
         saveReminder.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
         saveReminder.setDefaultButton(QMessageBox::Save);
@@ -174,8 +180,8 @@ bool ProjectGui::save(bool autosave)
 {
     if (isLoaded()) {
         QDomDocument projectDomDocumentTemplate = _project->projectDomDocumentTemplate(_project->name(),
-                _project->version(),
-                _project->description());
+                                                    _project->version(),
+                                                    _project->description());
         QDomElement projectRootDomElement =  projectDomDocumentTemplate.documentElement();
         _itemView->save(projectDomDocumentTemplate, projectRootDomElement);
 
@@ -186,7 +192,6 @@ bool ProjectGui::save(bool autosave)
             } else {
                 return _project->save();
             }
-
         }
     }
 
@@ -205,7 +210,10 @@ bool ProjectGui::load()
     // Check version
     if (_project->majorProjectVersion() < MajorProVersion) {
         // Incompatible version
-        _lastError = QString("Invalid project version %1 -> expect 2.0.").arg(_project->version().toStdString().c_str());
+        _lastError = tr("Invalid project version \"%1\" -> expect \"%2\".").
+                arg(_project->version().toStdString().c_str()).
+                arg(MajorProVersion);
+
         return false;
     }
 
@@ -263,11 +271,11 @@ bool ProjectGui::unload()
         // Delete itemView and set it to null.
         delete _itemView;
         _itemView = nullptr;
-    }
 
-    // Set projectGui loaded to false.
-    setLoaded(false);
-    emit projectUnloaded(sharedFromThis());
+        // Set projectGui loaded to false.
+        setLoaded(false);
+        emit projectUnloaded(sharedFromThis());
+    }
 
     // Return unload projectGui procedure is successfull.
     return true;
@@ -276,6 +284,11 @@ bool ProjectGui::unload()
 bool ProjectGui::isLoaded() const
 {
     return _isLoaded;
+}
+
+bool ProjectGui::isFastLoaded() const
+{
+    return _project->isFastLoad();
 }
 
 void ProjectGui::setLoaded(bool isLoaded)
@@ -322,6 +335,11 @@ void ProjectGui::onStateChanged()
     }
 }
 
+void ProjectGui::onSearchProject()
+{
+    _parent->searchProjectSource(sharedFromThis());
+}
+
 void ProjectGui::onExternDomChanged()
 {
     if (Gui_Manager::instance()->mainWindowIsActive()) {
@@ -354,7 +372,6 @@ bool ProjectGui::reloadDomDocument()
     QString errorSetDomDocument;
 
     if (!testProjectDomDocument.setContent(_project->domDocument().toByteArray(), &errorSetDomDocument)) {
-        //qDebug() << errorSetDomDocument;
         return false;
     }
 
@@ -372,7 +389,7 @@ void ProjectGui::showProjectChangedByExternalDialog()
         return;
     }
 
-    QString dialogText = QString("The project %1 has changed outside RTV.Do you want to reload it?\n")
+    QString dialogText = tr("The project \"%1\" has changed outside RTV. Do you want to reload it?\n")
                          .arg(_project->name());
     _domChanged = false;
     _projectChangedExternDialog->setText(dialogText);
@@ -389,27 +406,32 @@ void ProjectGui::showProjectChangedByExternalDialog()
             break;
 
         case ProjectChangedAction::SaveAll:
-            _abstractWorkspaceGui->saveExternChangedProjects();
+            _parent->saveExternChangedProjects();
             break;
 
         case ProjectChangedAction::DiscardAll:
-            _abstractWorkspaceGui->resetExternChangedProjects();
+            _parent->resetExternChangedProjects();
             break;
 
         default:
             break;
-        };
+        }
     }
+}
+
+void ProjectGui::setDialogPositionOffset(const QPoint &dialogPoistion)
+{
+    _dialogPositionOffset = dialogPoistion;
 }
 
 void ProjectGui::onLoadTrigger()
 {
-    _abstractWorkspaceGui->loadProject(sharedFromThis());
+    _parent->loadProject(sharedFromThis());
 }
 
 void ProjectGui::onUnloadTrigger()
 {
-    _abstractWorkspaceGui->unloadProject(sharedFromThis());
+    _parent->unloadProject(sharedFromThis());
 }
 
 void ProjectGui::onSaveTrigger()
@@ -419,67 +441,81 @@ void ProjectGui::onSaveTrigger()
 
 void ProjectGui::onSaveAllTrigger()
 {
-    _abstractWorkspaceGui->onSaveAllProjects();
+    _parent->onSaveAllProjects();
 }
 
 void ProjectGui::onLoadAllTrigger()
 {
-    _abstractWorkspaceGui->onLoadAllProjects();
+    _parent->onLoadAllProjects();
 }
 
 void ProjectGui::onUnloadAllTrigger()
 {
-    _abstractWorkspaceGui->onUnloadAllProjects();
+    _parent->onUnloadAllProjects();
 }
 
 void ProjectGui::onUnloadAllExceptThisTrigger()
 {
-    _abstractWorkspaceGui->unloadAllProjectsExceptThis(sharedFromThis());
+    _parent->unloadAllProjectsExceptThis(sharedFromThis());
 }
 
 void ProjectGui::onUnloadAllExceptVisibleTrigger()
 {
-    _abstractWorkspaceGui->unloadAllProjectsExceptVisible();
+    _parent->unloadAllProjectsExceptVisible();
 }
 
 void ProjectGui::onRemoveTrigger()
 {
-    _abstractWorkspaceGui->removeProject(sharedFromThis());
+    _parent->removeProject(sharedFromThis());
 }
 
 void ProjectGui::onDeleteTrigger()
 {
-    _abstractWorkspaceGui->deleteProject(sharedFromThis());
+    _parent->deleteProject(sharedFromThis());
 }
 
 void ProjectGui::onFastLoad(bool state)
 {
     if (_project->isFastLoad() != state) {
         _project->setFastLoad(state);
-        _abstractWorkspaceGui->workspace()->save();
+        _parent->workspace()->save();
     }
 }
 
 void ProjectGui::showProjectInfo()
 {
-    const QString projectInformation = tr("Name: %1\n\nConnection: %2\n\nDescription: \n%3")
-                                       .arg(_project->name())
-                                       .arg(_project->connectionString())
-                                       .arg(_project->description());
-    QMessageBox::information(0, tr("Project Information"), projectInformation, QMessageBox::Ok);
+    if(!_projectInfoDialog.isNull()){
+        _projectInfoDialog->setFocus();
+        _projectInfoDialog->activateWindow();
+        _projectInfoDialog->raise();
+        return;
+    }
+    _projectInfoDialog = QPointer<QDialog>(new QDialog(_parent->projectListDockWidget()));
+
+    Ui::ProjectInfoDialog ui;
+    ui.setupUi(_projectInfoDialog.data());
+
+    ui.lineEditName->setText(_project->name());
+    ui.lineEditConnection->setText(_project->connectionString());
+    ui.textEditDescription->setText(_project->description());
+
+    _projectInfoDialog->setAttribute( Qt::WA_DeleteOnClose );
+    _projectInfoDialog->setWindowTitle(QString("Project Information \"%1\"").arg(_project->name()));
+    _projectInfoDialog->show();
+
+    int x = _projectInfoDialog->x() + _dialogPositionOffset.x();
+    int y = _projectInfoDialog->y() + _dialogPositionOffset.y();
+    _projectInfoDialog->setGeometry(x,y,_projectInfoDialog->width(),_projectInfoDialog->height());
+    _dialogPositionOffset.setX(0);
+    _dialogPositionOffset.setY(0);
+
+    _projectInfoDialog->setFocus();
+    _projectInfoDialog->activateWindow();
 }
 
 void ProjectGui::onEditTrigger()
 {
-    bool descriptionAccepted;
-    QString projectDescription = QInputDialog::getMultiLineText(0,
-                                 tr("Edit Project"),
-                                 tr("Description"),
-                                 _project->description(), &descriptionAccepted);
-
-    if (descriptionAccepted) {
-        _project->setDescription(projectDescription);
-    }
+    _parent->editProject(sharedFromThis());
 }
 
 void ProjectGui::onItemViewSceneChanged()

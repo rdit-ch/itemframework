@@ -7,20 +7,7 @@ FileProjectNewDialog::FileProjectNewDialog(const QString& directory, QWidget* pa
 {
     qRegisterMetaType<FileProjectData>();
     ui->setupUi(this);
-    QString dialogDirectory = directory;
-
-    if (dialogDirectory.isEmpty()) {
-        QDir workdirectoryRtv = QDir(HomeFolderRtv);
-
-        if (!workdirectoryRtv.exists()) {
-            workdirectoryRtv.mkdir(workdirectoryRtv.absolutePath());
-        }
-
-        dialogDirectory = workdirectoryRtv.absolutePath();
-    }
-
-    ui->lineEditPath->setText(dialogDirectory);
-
+    ui->lineEditPath->setText(directory);
     _data = new FileProjectData;
     _fileDialog = new QFileDialog(this, QStringLiteral("Create new Project"), directory);
 
@@ -30,7 +17,7 @@ FileProjectNewDialog::FileProjectNewDialog(const QString& directory, QWidget* pa
     _fileDialog->setAcceptMode(QFileDialog::AcceptSave);
     _fileDialog->setOption(QFileDialog::DontUseNativeDialog, true);
     _fileDialog->setAttribute(Qt::WA_DeleteOnClose, false);
-    _fileDialog->setDirectory(dialogDirectory);
+    _fileDialog->setDirectory(directory);
 
     _actionFileExists = new QAction(QIcon(":/core/projectmanager/workspace_not_valid.png"), "", this);
     _actionFileExists->setToolTip(QString("File already exists and will be overridden."));

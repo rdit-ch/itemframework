@@ -3,30 +3,30 @@
 #include "ui_file_workspace_edit_dialog.h"
 #include "project_manager_config.h"
 
-FileWorkspaceEditDialog::FileWorkspaceEditDialog(QString lastUsedPath, QDialog* parent) : QDialog(parent), ui(new Ui::FileWorkspaceEditDialog)
+FileWorkspaceEditDialog::FileWorkspaceEditDialog(QString lastUsedPath, QDialog* parent) : QDialog(parent), _ui(new Ui::FileWorkspaceEditDialog)
 {
-    ui->setupUi(this);
+    _ui->setupUi(this);
     _parent = parent;
-    _lastUsedPath = lastUsedPath;
     _workspacePropertiesInitial = new FileWorkspaceData;
     _workspacePropertiesEdited = new FileWorkspaceData;
     _actionFileExists = new QAction(QIcon(":/core/projectmanager/workspace_not_valid.png"), "", this);
-    _actionFileExists->setToolTip(QString("File already exists and will be overridden."));
+    _actionFileExists->setToolTip(QLatin1String("File already exists."));
 
-    if (_lastUsedPath.isEmpty()) {
-        _lastUsedPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    if (lastUsedPath.isEmpty()) {
+        _lastUsedPath = QString(HomeFolderUser);
+    } else {
+        _lastUsedPath = lastUsedPath;
     }
 
-    ui->selectedWorkspaceFile->setToolTip(QString("e.g workspaceFile.%1").arg(WspFileExt));
-
-    connect(ui->selectedWorkspaceName, &QLineEdit::textChanged, this, &FileWorkspaceEditDialog::onWorkspaceNameChanged);
-    connect(ui->selectedWorkspaceFile, &QLineEdit::textChanged, this, &FileWorkspaceEditDialog::onWorkspaceFileChanged);
-    connect(ui->selectedWorkspaceDescription, &QTextEdit::textChanged, this, &FileWorkspaceEditDialog::onWorkspaceDescriptionChanged);
+    _ui->selectedWorkspaceFile->setToolTip(QString("e.g workspaceFile.%1").arg(WspFileExt));
+    connect(_ui->selectedWorkspaceName, &QLineEdit::textChanged, this, &FileWorkspaceEditDialog::onWorkspaceNameChanged);
+    connect(_ui->selectedWorkspaceFile, &QLineEdit::textChanged, this, &FileWorkspaceEditDialog::onWorkspaceFileChanged);
+    connect(_ui->selectedWorkspaceDescription, &QTextEdit::textChanged, this, &FileWorkspaceEditDialog::onWorkspaceDescriptionChanged);
 }
 
 FileWorkspaceEditDialog::~FileWorkspaceEditDialog()
 {
-    delete ui;
+    delete _ui;
     delete _actionFileExists;
     delete _workspacePropertiesInitial;
     delete _workspacePropertiesEdited;
@@ -34,13 +34,13 @@ FileWorkspaceEditDialog::~FileWorkspaceEditDialog()
 
 void FileWorkspaceEditDialog::setWorkspace(const QSharedPointer<AbstractWorkspace>& workspace)
 {
-    QSharedPointer<FileWorkspace> fileWorkspace = qSharedPointerCast<FileWorkspace>(workspace);
+    _fileWorkspace = qSharedPointerCast<FileWorkspace>(workspace);
 
-    if (fileWorkspace.isNull()) {
+    if (_fileWorkspace.isNull()) {
         setDialogMode(EditDialogMode::WorkspaceSelection);
     } else {
         setDialogMode(EditDialogMode::NoWorkspaceSelection);
-        fillWorkspaceGuiElements(fileWorkspace);
+        fillWorkspaceGuiElements(_fileWorkspace);
     }
 }
 
@@ -48,22 +48,22 @@ void FileWorkspaceEditDialog::fillWorkspaceGuiElements(const QSharedPointer<File
 {
     const QString name = fileWorkspace->name();
     const QString file = fileWorkspace->fileName();
-    const QString directory = fileWorkspace->directory();
+    const QString directory = fileWorkspace->path();
     const QString description = fileWorkspace->description();
 
     _workspacePropertiesInitial->name = name;
-    _workspacePropertiesInitial->file = file;
+    _workspacePropertiesInitial->fileName = file;
     _workspacePropertiesInitial->directory = directory;
     _workspacePropertiesInitial->description = description;
-    _workspacePropertiesInitial->absoluteFilePath = QString(directory + Slash + file);
+    _workspacePropertiesInitial->filePath = QString(directory + Slash + file);
 
-    ui->selectedWorkspaceName->setText(name);
-    ui->selectedWorkspaceFile->setText(file);
-    ui->selectedWorkspaceDirectory->setText(directory);
-    ui->selectedWorkspaceDescription->setText(description);
+    _ui->selectedWorkspaceName->setText(name);
+    _ui->selectedWorkspaceFile->setText(file);
+    _ui->selectedWorkspaceDirectory->setText(directory);
+    _ui->selectedWorkspaceDescription->setText(description);
 
     if (_dialogMode == EditDialogMode::WorkspaceSelection) {
-        ui->lineEditSelectedFile->setText(QString(directory + Slash + file));
+        _ui->lineEditSelectedFile->setText(QString(directory + Slash + file));
     }
 
     enableGuiElements(true);
@@ -75,10 +75,10 @@ void FileWorkspaceEditDialog::setDialogMode(FileWorkspaceEditDialog::EditDialogM
 
     switch (mode) {
     case EditDialogMode::NoWorkspaceSelection:
-        delete ui->labelSelectionFile;
-        delete ui->lineEditSelectedFile;
-        delete ui->pushButtonBrowseWorkspace;
-        delete ui->lineSelectionFile;
+        delete _ui->labelSelectionFile;
+        delete _ui->lineEditSelectedFile;
+        delete _ui->pushButtonBrowseWorkspace;
+        delete _ui->lineSelectionFile;
         break;
 
     case EditDialogMode::WorkspaceSelection:
@@ -89,12 +89,12 @@ void FileWorkspaceEditDialog::setDialogMode(FileWorkspaceEditDialog::EditDialogM
 
 void FileWorkspaceEditDialog::overrideValidation()
 {
-    const QString name = ui->selectedWorkspaceName->text();
-    const QString file = ui->selectedWorkspaceFile->text();
-    const QString path = ui->selectedWorkspaceDirectory->text();
-    const QString absolutFilePath = QString(path + Slash + file);
-    const QString absolutFilePathInitial = QString(_workspacePropertiesInitial->directory + Slash + _workspacePropertiesInitial->file);
-    const QString description = ui->selectedWorkspaceDescription->toPlainText();
+    const QString name = _ui->selectedWorkspaceName->text();
+    const QString file = _ui->selectedWorkspaceFile->text();
+    const QString directory = _ui->selectedWorkspaceDirectory->text();
+    const QString absolutFilePath = QString(directory + Slash + file);
+    const QString absolutFilePathInitial = QString(_workspacePropertiesInitial->directory + Slash + _workspacePropertiesInitial->fileName);
+    const QString description = _ui->selectedWorkspaceDescription->toPlainText();
 
     bool nameChanged = false;
     bool fileChanged = false;
@@ -106,7 +106,7 @@ void FileWorkspaceEditDialog::overrideValidation()
     }
 
     // Check filename changed
-    if (file != _workspacePropertiesInitial->file) {
+    if (absolutFilePath != absolutFilePathInitial) {
         fileChanged = true;
     }
 
@@ -119,46 +119,47 @@ void FileWorkspaceEditDialog::overrideValidation()
     if (nameChanged) {
         // Check name is not empty
         if (name.isEmpty()) {
-            ui->buttonSaveSelectedWorkspace->setEnabled(false);
+            _ui->buttonSaveSelectedWorkspace->setEnabled(false);
             return;
         }
     }
 
     // Validate file
     if (fileChanged) {
-        // Filenaming + Extension
-        if (!QRegExp(WspFileRegExp, Qt::CaseInsensitive).exactMatch(file)) {
-            ui->buttonSaveSelectedWorkspace->setEnabled(false);
-            return;
-        }
-
         // File exsists warning
         if ((absolutFilePathInitial != absolutFilePath) && QFile::exists(absolutFilePath)) {
-            ui->selectedWorkspaceFile->addAction(_actionFileExists, QLineEdit::ActionPosition::LeadingPosition);
+            _ui->selectedWorkspaceFile->addAction(_actionFileExists, QLineEdit::ActionPosition::LeadingPosition);
+            _ui->selectedWorkspaceFile->update();
         } else {
-            ui->selectedWorkspaceFile->removeAction(_actionFileExists);
+            _ui->selectedWorkspaceFile->removeAction(_actionFileExists);
+            _ui->selectedWorkspaceFile->update();
         }
     }
 
     if (nameChanged || fileChanged || descriptionChanged) {
-        ui->buttonSaveSelectedWorkspace->setEnabled(true);
+        _ui->buttonSaveSelectedWorkspace->setEnabled(true);
     } else {
-        ui->buttonSaveSelectedWorkspace->setEnabled(false);
+        _ui->buttonSaveSelectedWorkspace->setEnabled(false);
     }
 }
 
 void FileWorkspaceEditDialog::enableGuiElements(bool state)
 {
-    ui->selectedWorkspaceName->setEnabled(state);
-    ui->selectedWorkspaceFile->setEnabled(state);
-    ui->selectedWorkspaceDirectory->setEnabled(state);
-    ui->selectedWorkspaceDescription->setEnabled(state);
-    ui->pushButtonSelectWorkspaceDirectory->setEnabled(state);
+    _ui->selectedWorkspaceName->setEnabled(state);
+    _ui->selectedWorkspaceFile->setEnabled(state);
+    _ui->selectedWorkspaceDirectory->setEnabled(state);
+    _ui->selectedWorkspaceDescription->setEnabled(state);
+    _ui->pushButtonSelectWorkspaceDirectory->setEnabled(state);
 }
 
 FileWorkspaceData* FileWorkspaceEditDialog::workspacePropertiesEdited() const
 {
     return _workspacePropertiesEdited;
+}
+
+QSharedPointer<FileWorkspace> FileWorkspaceEditDialog::workspace() const
+{
+    return _fileWorkspace;
 }
 
 FileWorkspaceData* FileWorkspaceEditDialog::workspacePropertiesInitial() const
@@ -168,11 +169,26 @@ FileWorkspaceData* FileWorkspaceEditDialog::workspacePropertiesInitial() const
 
 void FileWorkspaceEditDialog::accept()
 {
-    _workspacePropertiesEdited->name = ui->selectedWorkspaceName->text();
-    _workspacePropertiesEdited->file = ui->selectedWorkspaceFile->text();
-    _workspacePropertiesEdited->directory = ui->selectedWorkspaceDirectory->text();
-    _workspacePropertiesEdited->absoluteFilePath = QString(_workspacePropertiesEdited->directory + Slash + _workspacePropertiesEdited->file);
-    _workspacePropertiesEdited->description = ui->selectedWorkspaceDescription->toPlainText();
+    _workspacePropertiesEdited->name = _ui->selectedWorkspaceName->text();
+    _workspacePropertiesEdited->fileName = _ui->selectedWorkspaceFile->text();
+    _workspacePropertiesEdited->directory = _ui->selectedWorkspaceDirectory->text();
+    _workspacePropertiesEdited->filePath = QString(_workspacePropertiesEdited->directory + Slash + _workspacePropertiesEdited->fileName);
+    _workspacePropertiesEdited->description = _ui->selectedWorkspaceDescription->toPlainText();
+
+    const QString absolutFilePathInitial = QString(_workspacePropertiesInitial->directory + Slash + _workspacePropertiesInitial->fileName);
+    const QString absolutFilePathEdited = _workspacePropertiesEdited->filePath;
+
+    if ((absolutFilePathInitial != absolutFilePathEdited) && QFile::exists(absolutFilePathEdited)) {
+        int ret = QMessageBox::warning(this,
+                                       tr("Overwrite workspace"),
+                                       tr("File allready exists and will be overwritten.\n\n\"%1\"")
+                                       .arg(absolutFilePathEdited),
+                                       QMessageBox::Ok | QMessageBox::Cancel,
+                                       QMessageBox::Ok);
+        if(ret == QMessageBox::Cancel) {
+            return;
+        }
+    }
 
     QDialog::accept();
 
@@ -192,7 +208,6 @@ void FileWorkspaceEditDialog::reject()
 
 void FileWorkspaceEditDialog::showSetWorkspaceFileDialog()
 {
-
     QFileDialog dialogSetWorkspaceFile;
     // setOption and setAttribute properties prevent the QFileDialog from delete by accepted and rejected signal
     dialogSetWorkspaceFile.setNameFilter(QStringLiteral("TWSP (*.twsp);; All files (*.*)"));
@@ -215,30 +230,44 @@ void FileWorkspaceEditDialog::showSetWorkspaceFileDialog()
 
         const QString workspaceFilePath = selectedFiles.first();
         // Create new file workspace with prefered filename and workspacename
-        const QSharedPointer<FileWorkspace> fileWorkspace = FileWorkspace::createFileWorkspaceFromFile(workspaceFilePath);
+        _fileWorkspace = FileWorkspace::createFileWorkspaceFromFile(workspaceFilePath);
 
-        if (fileWorkspace.isNull()) {
+        if (_fileWorkspace.isNull()) {
             enableGuiElements(false);
             return;
         }
 
-        if (!fileWorkspace->isValid()) {
+        if (!_fileWorkspace->isValid()) {
             enableGuiElements(false);
             const QString workspaceErrorMessage = tr("Workspace is invalid.\n\nConnection: \n%1\n\nError:\n%2")
-                                                  .arg(fileWorkspace->connectionString())
-                                                  .arg(fileWorkspace->lastError());
+                                                  .arg(_fileWorkspace->connectionString())
+                                                  .arg(_fileWorkspace->lastError());
 
             QMessageBox::warning(0, tr("Edit Workspace."), workspaceErrorMessage, QMessageBox::Ok);
             return;
         }
 
-        fillWorkspaceGuiElements(fileWorkspace);
+        fillWorkspaceGuiElements(_fileWorkspace);
     }
 }
 
-void FileWorkspaceEditDialog::showSetNewWorkspaceFileDialog()
+void FileWorkspaceEditDialog::showFileDialog()
 {
+    QString startDirectory = _lastUsedPath;
+    if(startDirectory == QString(HomeFolderUser) && !_workspacePropertiesInitial->fileName.isEmpty()){
+        startDirectory = _workspacePropertiesInitial->directory;
+    }
 
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Choose a Workspace Folder"),
+                                                    startDirectory,
+                                                    QFileDialog::DontResolveSymlinks);
+
+    if(!dir.isEmpty()){
+        _ui->selectedWorkspaceDirectory->setText(dir);
+        _lastUsedPath = dir;
+    }
+
+    overrideValidation();
 }
 
 void FileWorkspaceEditDialog::onWorkspaceNameChanged(QString name)
@@ -257,9 +286,9 @@ void FileWorkspaceEditDialog::onWorkspaceNameChanged(QString name)
 
         if (!cleanFileName.isEmpty()) {
             cleanFileName = QString(cleanFileName + Dot + WspFileExt).toLower();
-            ui->selectedWorkspaceFile->setText(cleanFileName);
+            _ui->selectedWorkspaceFile->setText(cleanFileName);
         } else {
-            ui->selectedWorkspaceFile->clear();
+            _ui->selectedWorkspaceFile->clear();
         }
     }
 
@@ -290,80 +319,3 @@ void FileWorkspaceEditDialog::onWorkspaceIsDefaultChanged()
 {
     overrideValidation();
 }
-
-/*
-
-
-void SelectWorkspaceDialog::deleteSelectedWorkspace()
-{
-    if (!_selectedWorkspace.isNull() && _selectedWorkspace->isValid()) {
-        if (_selectedWorkspace->isOpen()) {
-            QMessageBox::information(this, tr("Delete Workspace."),
-                                     tr("You can not delete a open Workspace.\nPlease switch to a different one."),
-                                     QMessageBox::Ok);
-            return;
-        }
-
-        QCheckBox* deleteProjectsCheckBox = new QCheckBox(tr("Delete all Projects in this Workspace."));
-        QMessageBox deleteWorkspaceMessageBox;
-        deleteWorkspaceMessageBox.setText(tr("Do you want to delete this Workspace?\n%1").arg(_selectedWorkspace->name()));
-        deleteWorkspaceMessageBox.setCheckBox(deleteProjectsCheckBox);
-        deleteWorkspaceMessageBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-        deleteWorkspaceMessageBox.setIcon(QMessageBox::Question);
-        int ret = deleteWorkspaceMessageBox.exec();
-
-        QVector<QSharedPointer<AbstractWorkspace>> recentUsedWorkspaces = _projectManager->recentUsedWorkspaces();
-        bool recentUsedWorkspaceVectorChanged = false;
-
-        if (ret == QMessageBox::Ok) {
-            if (_selectedWorkspace->deleteWorkspace(deleteWorkspaceMessageBox.checkBox()->isChecked())) {
-
-                recentUsedWorkspaces.removeOne(_selectedWorkspace);
-                removeWorkspace(_selectedWorkspace);
-                recentUsedWorkspaceVectorChanged = true;
-            }
-        }
-
-        if (recentUsedWorkspaceVectorChanged) {
-            _projectManager->setRecentUsedWorkspaces(recentUsedWorkspaces);
-            _projectManager->writeRecentUsedWorkspacesToFile();
-        }
-    }
-}
-
-
-void SelectWorkspaceDialog::saveSelectedWorkspace()
-{
-    if (_selectedWorkspace->isValid()) {
-        QString newWorkspaceName = ui->selectedWorkspaceName->text();
-        QString newWorkspaceDescription = ui->selectedWorkspaceDescription->toPlainText();
-
-        if (!newWorkspaceName.isEmpty()) {
-            _selectedWorkspace->setName(newWorkspaceName);
-        }
-
-        _selectedWorkspace->setDescription(newWorkspaceDescription);
-        ui->selectedWorkspaceName->setText(_selectedWorkspace->name());
-        ui->buttonSaveSelectedWorkspace->setEnabled(false);
-    }
-}
-
-void SelectWorkspaceDialog::selectedWorkspaceNameChanged(QString name)
-{
-    if (!_selectedWorkspace.isNull() && _selectedWorkspace->isValid()) {
-        if (!name.isEmpty() && name != _selectedWorkspace->name()) {
-            ui->buttonSaveSelectedWorkspace->setEnabled(true);
-        } else {
-            ui->buttonSaveSelectedWorkspace->setEnabled(false);
-        }
-    }
-}
-
-void SelectWorkspaceDialog::selectedWorkspaceDescriptionChanged()
-{
-    if (!_selectedWorkspace.isNull() && _selectedWorkspace->isValid()) {
-        ui->buttonSaveSelectedWorkspace->setEnabled(true);
-    }
-}
-
-*/

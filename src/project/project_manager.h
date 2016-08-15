@@ -26,8 +26,11 @@ public:
     int workspaceCount() const;
     QVector<QSharedPointer<AbstractWorkspace>> workspaces() const;
 
-private:
+    QString workDirectoryPath() const;
+    void setWorkDirectoryPath(const QString &workDirectoryPath);
 
+private:
+    QString _workDirectory;
     QVector<QSharedPointer<AbstractWorkspace>> _recentWorkspaces;
     QSharedPointer<AbstractWorkspace> _currentWorkspace;
     void addWorkspaceElement(QSharedPointer<AbstractWorkspace> workspace, QDomDocument& dom) const;

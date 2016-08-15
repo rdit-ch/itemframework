@@ -110,7 +110,7 @@
   </connection>
   <connection>
    <sender>pushButtonDiscard</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>ProjectSaveReminderDialog</receiver>
    <slot>accept()</slot>
    <hints>
@@ -126,7 +126,7 @@
   </connection>
   <connection>
    <sender>pushButtonDiscard</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>unsavedProjectList</receiver>
    <slot>clearSelection()</slot>
    <hints>

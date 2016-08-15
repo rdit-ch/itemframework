@@ -20,6 +20,12 @@ bool FileHelper::fileExists(const QString& filePath)
     return true;
 }
 
+bool FileHelper::directoryExists(const QString &directoryPath)
+{
+    QFileInfo directory(directoryPath);
+    return directory.isDir();
+}
+
 bool FileHelper::removeFile(const QString& filePath)
 {
     QFile file(filePath);
@@ -36,6 +42,28 @@ bool FileHelper::removeFile(const QString& filePath)
 
     _lastError.clear();
     return true;
+}
+
+bool FileHelper::directoryIsReadable(const QString& directoryPath)
+{
+    QFileInfo directory(directoryPath);
+
+    if (directory.isDir() && directory.isReadable()){
+        return true;
+    }
+
+    return false;
+}
+
+bool FileHelper::directoryIsWritable(const QString& directoryPath)
+{
+    QFileInfo directory(directoryPath);
+
+    if (directory.isDir() && directory.isWritable()){
+        return true;
+    }
+
+    return false;
 }
 
 bool FileHelper::testOpenFile(const QString& filePath, QIODevice::OpenMode openMode)
@@ -94,19 +122,25 @@ QDomDocument FileHelper::domDocumentFromXMLFile(const QString& filePath)
     return domDocument;
 }
 
-QString FileHelper::relativeToAbsoluteFilePath(const QString& fileNameFrom, const QString& fileNameTo)
+QString FileHelper::relativeToAbsoluteFilePath(const QString& filePathFrom, const QString& filePathTo)
 {
-    QFileInfo fileInfoTo(fileNameTo);
-    QDir dirTo(fileInfoTo.dir());
-    return QDir::cleanPath(dirTo.absoluteFilePath(fileNameFrom));
+    const QFileInfo fileInfoTo(filePathTo);
+    const QDir dirTo(fileInfoTo.dir());
+    return QDir::cleanPath(dirTo.absoluteFilePath(filePathFrom));
 }
 
-QString FileHelper::absoluteToRelativeFilePath(const QString& fileNameFrom, const QString& fileNameTo)
+QString FileHelper::absoluteToRelativeFilePath(const QString& filePathFrom, const QString& filePathTo)
 {
-    QFileInfo fileInfoTo(fileNameTo);
-    QDir dirTo(fileInfoTo.dir());
-    QFileInfo fileInfoFrom(fileNameFrom);
-    const QString relativePath = dirTo.relativeFilePath(fileInfoFrom.absoluteDir().absolutePath());
-    const QString relativeFileName = QString("%1/%2").arg(relativePath).arg(fileInfoFrom.fileName());
+    const QFileInfo fileInfoTo(filePathTo);
+    const QFileInfo fileInfoFrom(filePathFrom);
+    const QString relativePath = fileInfoTo.dir().relativeFilePath(fileInfoFrom.absoluteDir().absolutePath());
+
+    QString relativeFileName;
+    if(relativePath.endsWith(QString("/"))){
+        relativeFileName = QString("%1%2").arg(relativePath).arg(fileInfoFrom.fileName());
+    } else {
+        relativeFileName = QString("%1/%2").arg(relativePath).arg(fileInfoFrom.fileName());
+    }
+
     return relativeFileName;
 }

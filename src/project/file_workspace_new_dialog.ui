@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>680</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>New Workspace</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="leftMargin">
@@ -29,6 +29,9 @@
    <item>
     <widget class="QWidget" name="widget" native="true">
      <layout class="QFormLayout" name="formLayout_2">
+      <property name="fieldGrowthPolicy">
+       <enum>QFormLayout::ExpandingFieldsGrow</enum>
+      </property>
       <item row="0" column="0">
        <widget class="QLabel" name="labelName">
         <property name="text">
@@ -55,7 +58,7 @@
         <item>
          <widget class="QPushButton" name="butShowFileDialog">
           <property name="text">
-           <string>Browse...</string>
+           <string>...</string>
           </property>
          </widget>
         </item>
@@ -159,7 +162,7 @@
  <connections>
   <connection>
    <sender>butAccept</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>FileWorkspaceNewDialog</receiver>
    <slot>accept()</slot>
    <hints>
@@ -175,7 +178,7 @@
   </connection>
   <connection>
    <sender>butReject</sender>
-   <signal>released()</signal>
+   <signal>clicked()</signal>
    <receiver>FileWorkspaceNewDialog</receiver>
    <slot>reject()</slot>
    <hints>

@@ -224,7 +224,7 @@
   </action>
   <action name="actionWorkspace">
    <property name="text">
-    <string>&amp;Workspaces</string>
+    <string>&amp;Switch Workspace...</string>
    </property>
   </action>
  </widget>

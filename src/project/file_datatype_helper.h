@@ -4,19 +4,21 @@
 #include <QObject>
 
 struct FileProjectData {
-    QString name;
-    QString description;
-    QString filePath;
     bool fastLoad = false;
-};
-
-struct FileWorkspaceData {
     QString name;
     QString description;
     QString file;
+    QString filePath;
     QString directory;
-    QString absoluteFilePath;
+};
+
+struct FileWorkspaceData {
     bool isDefault = false;
+    QString name;
+    QString description;
+    QString fileName;
+    QString filePath;
+    QString directory;
 };
 
 Q_DECLARE_METATYPE(FileProjectData)

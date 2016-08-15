@@ -1,56 +1,76 @@
-#include <QDebug>
 #include "file_workspace.h"
 #include "project_manager_config.h"
+#include "file_project.h"
 
-FileWorkspace::FileWorkspace(): AbstractWorkspace(QLatin1String("File"))
+FileWorkspace::FileWorkspace(): AbstractWorkspace(tr("File"))
 {
-    setValid(false);
 }
 
 FileWorkspace::~FileWorkspace()
 {
 }
 
-void FileWorkspace::init()
+// ---------------------------------------------------------------------------------------------------------------------
+// Workspace validate functions
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool FileWorkspace::validateFileProperties()
 {
-    if (_filePath.isEmpty()) {
-        return;
+    if (_fileInfo.filePath().isEmpty()) {
+        return false;
     }
 
-    const QFileInfo workspaceFileInfo(_filePath);
-    const QString fileBaseName = workspaceFileInfo.baseName();
-
-    if (!FileHelper::fileExists(_filePath)) {
+    if (!FileHelper::fileExists(_fileInfo.filePath())) {
         setLastError(FileHelper::lastError());
-        setName(fileBaseName);
-        return;
+        return false;
     }
 
-    if (!FileHelper::testFileOpenMode(_filePath, QIODevice::ReadWrite)) {
+    if (!FileHelper::testFileOpenMode(_fileInfo.filePath(), QIODevice::ReadWrite)) {
         setLastError(FileHelper::lastError());
-        setName(fileBaseName);
-        return;
+        return false;
     }
 
-    QDomDocument workspaceDomDocument = FileHelper::domDocumentFromXMLFile(_filePath);
-
-    if (workspaceDomDocument.isNull()) {
-        setLastError(FileHelper::lastError());
-        return;
-    }
-
-    if (!setWorkspaceProperties(workspaceDomDocument, fileBaseName)) {
-        return;
-    }
-
-    initProjectList(workspaceDomDocument);
-    setValid(true);
+    clearLastError();
+    return true;
 }
 
-void FileWorkspace::initProjectList(const QDomDocument& workspaceDomDocument)
+void FileWorkspace::setFileEditMode(bool editMode)
+{
+    _editMode = editMode;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Workspace init
+// ---------------------------------------------------------------------------------------------------------------------
+
+void FileWorkspace::init()
+{
+    if(!validateFileProperties()){
+        setValid(false);
+
+        if(!_fileInfo.filePath().isEmpty()){
+            setName(_fileInfo.baseName());
+        }
+        return;
+    }
+
+    const QDomDocument dom = FileHelper::domDocumentFromXMLFile(_fileInfo.filePath());
+
+    if (!setWorkspaceProperties(dom)) {
+        setValid(false);
+        return;
+    }
+
+    setWorkspaceDomDocument(dom);
+    initProjects();
+    setValid(true);
+    emit workspaceUpdated();
+}
+
+void FileWorkspace::initProjects()
 {
     // Get root dom element (xml -> TravizWorkspace) of workspaceDomDocument
-    const QDomElement rootElement = workspaceDomDocument.documentElement();
+    const QDomElement rootElement = workspaceDomDocument().documentElement();
     // Get first project dom node (xml -> TravizProject) of workspaceDomDocument
     QDomNode projectNode = rootElement.firstChild();
 
@@ -107,13 +127,12 @@ void FileWorkspace::initProjectList(const QDomDocument& workspaceDomDocument)
             // Analyze project xml structure was successfull.
             // Start creating project object QSharedPointer<Project> procedure.
 
-            const QString absProjectFile = FileHelper::relativeToAbsoluteFilePath(projectFilePath, _filePath);
+            const QString absProjectFile = FileHelper::relativeToAbsoluteFilePath(projectFilePath, _fileInfo.filePath());
 
             // Create project dom document from xml project file (projectFilePath).
             const QDomDocument projectDomDocument = FileHelper::domDocumentFromXMLFile(absProjectFile);
-            QSharedPointer<AbstractProject> project = QSharedPointer<AbstractProject>(new FileProject(settingsScope(),
-                    absProjectFile,
-                    projectDomDocument));
+            QSharedPointer<FileProject> project = QSharedPointer<FileProject>(new FileProject(settingsScope(), absProjectFile, projectDomDocument));
+            project->setRelativFilePath(projectFilePath);
             // Set the fast load attribute.
             project->setFastLoad(fastLoad);
             // Add project to this workspace. Remeber that the project can be invalid.
@@ -125,44 +144,85 @@ void FileWorkspace::initProjectList(const QDomDocument& workspaceDomDocument)
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Workspace update
+// ---------------------------------------------------------------------------------------------------------------------
+
+void FileWorkspace::update()
+{
+    if(!validateFileProperties()){
+        setValid(false);
+        if(!_fileInfo.filePath().isEmpty()){
+            setName(_fileInfo.baseName());
+        }
+    } else {
+        setValid(true);
+        updateProjects();
+    }
+
+    emit workspaceUpdated();
+}
+
+void FileWorkspace::updateProjects()
+{
+    for(QSharedPointer<AbstractProject> project : projects()){
+        QSharedPointer<FileProject> fileProject = qSharedPointerCast<FileProject>(project);
+        if(!fileProject->isValid()){
+            const QString absProjectFile = FileHelper::relativeToAbsoluteFilePath(fileProject->relativFilePath(), _fileInfo.filePath());
+            fileProject->setFilePath(absProjectFile);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Workspace test
+// ---------------------------------------------------------------------------------------------------------------------
+
+bool FileWorkspace::test()
+{
+    update();
+    return isValid();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
 bool FileWorkspace::save()
 {
     bool isSaved = false;
-    QIODevice::OpenModeFlag openMode = QIODevice::WriteOnly;
-    QFile file(_filePath);
+    const QIODevice::OpenModeFlag openMode = QIODevice::WriteOnly;
+    QFile file(_fileInfo.filePath());
 
-    if (!FileHelper::fileExists(_filePath)) {
+    if (!FileHelper::fileExists(_fileInfo.filePath())) {
         setLastError(FileHelper::lastError());
-
         if (!file.open(openMode)) {
-            if (!FileHelper::testFileOpenMode(_filePath, openMode)) {
+
+            if (!FileHelper::testFileOpenMode(_fileInfo.filePath(), openMode)) {
                 setLastError(FileHelper::lastError());
             }
-
-            return false;
+            return isSaved;
         }
 
         file.close();
-    } else {
-        if (!FileHelper::testFileOpenMode(_filePath, openMode)) {
-            setLastError(FileHelper::lastError());
-            return false;
-        }
+    } else if (!FileHelper::testFileOpenMode(_fileInfo.filePath(), openMode)) {
+        setLastError(FileHelper::lastError());
+        return isSaved;
     }
 
-    if (file.open(openMode)) {
+    clearLastError();
 
+    if (file.open(openMode)) {
         QDomDocument workspaceDomDocument = workspaceDomDocumentTemplate(name(), version(), description());
         QDomElement rootDomElement = workspaceDomDocument.documentElement();
 
         for (const QSharedPointer<AbstractProject>& project : projects()) {
             const QSharedPointer<FileProject> fileProject = qSharedPointerCast<FileProject>(project);
-            const QString relProjectFile = FileHelper::absoluteToRelativeFilePath(fileProject->filePath(), _filePath);
+            const QString relProjectFile = FileHelper::absoluteToRelativeFilePath(fileProject->filePath(), _fileInfo.filePath());
+
             QDomElement projectDomElement = workspaceDomDocument.createElement(ProDomElmTagPro);
             projectDomElement.setAttribute(WspDomElmProFastLoadAttLabel, QVariant(fileProject->isFastLoad()).toString());
             rootDomElement.appendChild(projectDomElement);
-
-
 
             QDomElement projectFilePathDomElement = workspaceDomDocument.createElement(WspDomElmTagProConnection);
             projectFilePathDomElement.setAttribute(WspDomElmProPathAttLabel, relProjectFile);
@@ -180,90 +240,55 @@ bool FileWorkspace::save()
     return isSaved;
 }
 
-
-void FileWorkspace::setAbsoluteFilePath(const QString& workspaceFilePath)
+void FileWorkspace::setFilePath(const QString& filePath)
 {
-    if (_filePath == workspaceFilePath) {
+    // No file changes
+    if (_fileInfo.filePath() == filePath) {
         return;
     }
 
-    if (!_filePath.isEmpty()) {
+    _fileInfo.setFile(filePath);
+    setConnectionString(_fileInfo.filePath());
 
-        QFile dstWorkspaceFile(workspaceFilePath);
-        QFile srcWorkspaceFile(_filePath);
-
-        if (dstWorkspaceFile.exists() && !dstWorkspaceFile.remove()) {
-            setLastError(QString("Destination file %1 exists and could not be removed.").arg(dstWorkspaceFile.fileName()));
-            return;
-        }
-
-        if (!srcWorkspaceFile.copy(dstWorkspaceFile.fileName())) {
-            setLastError(QString("Source file %1 could not be copied to destination file %2.").
-                         arg(srcWorkspaceFile.fileName()).
-                         arg(dstWorkspaceFile.fileName()));
-            return;
-        }
-
-        if (!srcWorkspaceFile.remove()) {
-            setLastError(QString("Source file %1 could not be removed.").arg(_filePath));
-            return;
-        }
+    if(isOpen() && !_fileSystemWatcher.files().contains(_fileInfo.filePath())){
+        _fileSystemWatcher.addPath(_fileInfo.filePath());
     }
-
-    QFileInfo workspaceFileInfo = QFileInfo(workspaceFilePath);
-    _filePath = workspaceFilePath;
-    _fileName = workspaceFileInfo.fileName();
-    _directory = workspaceFileInfo.absolutePath();
-    setConnectionString(workspaceFilePath);
 }
 
-QString FileWorkspace::absoluteFilePath() const
+QString FileWorkspace::filePath() const
 {
-    return _filePath;
+    return _fileInfo.filePath();
 }
 
-QString FileWorkspace::directory() const
+QString FileWorkspace::path() const
 {
-    return _directory;
+    return _fileInfo.path();
 }
 
 QString FileWorkspace::fileName() const
 {
-    return _fileName;
+    return _fileInfo.fileName();
 }
 
-bool FileWorkspace::test()
+void FileWorkspace::setOpen(bool isOpen)
 {
-    if (!FileHelper::fileExists(_filePath)) {
-        setLastError(FileHelper::lastError());
-        return false;
+    if (isOpen) {
+        connect(&_fileSystemWatcher, &QFileSystemWatcher::fileChanged, this, &FileWorkspace::onWorkspaceFileChanged);
+        _fileSystemWatcher.addPath(_fileInfo.filePath());
+    } else {
+        _fileSystemWatcher.disconnect(this);
     }
 
-    if (!FileHelper::testFileOpenMode(_filePath, QIODevice::ReadWrite)) {
-        setLastError(FileHelper::lastError());
-        return false;
-    }
-
-    if (!isValid()) {
-        setLastError(QString("Workspace %1 is not valid.\n\nFile: %2\n\n%3")
-                     .arg(name())
-                     .arg(_filePath)
-                     .arg(lastError()));
-        return false;
-    }
-
-    return true;
+    AbstractWorkspace::setOpen(isOpen);
 }
 
 bool FileWorkspace::compare(const QSharedPointer<AbstractWorkspace>& otherWorkspace) const
 {
-    if (typeString() == otherWorkspace->typeString()) {
-        QSharedPointer<FileWorkspace> otherFileWorkspace = qSharedPointerCast<FileWorkspace>(otherWorkspace);
+    QSharedPointer<FileWorkspace> otherFileWorkspace = qSharedPointerCast<FileWorkspace>(otherWorkspace);
 
-        if (!otherFileWorkspace.isNull()) {
-            if (_filePath == otherFileWorkspace->absoluteFilePath()) {
-                return true;
-            }
+    if (!otherFileWorkspace.isNull()) {
+        if (_fileInfo.filePath() == otherFileWorkspace->filePath()) {
+            return true;
         }
     }
 
@@ -273,7 +298,7 @@ bool FileWorkspace::compare(const QSharedPointer<AbstractWorkspace>& otherWorksp
 QSharedPointer<FileWorkspace> FileWorkspace::createFileWorkspaceFromFile(const QString& workspaceFilePath)
 {
     QSharedPointer<FileWorkspace> fileWorkspace = QSharedPointer<FileWorkspace>(new FileWorkspace);
-    fileWorkspace->setAbsoluteFilePath(workspaceFilePath);
+    fileWorkspace->setFilePath(workspaceFilePath);
     fileWorkspace->init();
     return fileWorkspace;
 }
@@ -283,7 +308,9 @@ bool FileWorkspace::deleteProject(const QSharedPointer<AbstractProject>& project
     QSharedPointer<FileProject> fileProject = qSharedPointerCast<FileProject>(project);
 
     if (!FileHelper::removeFile(fileProject->filePath())) {
-        //qDebug() << FileHelper::lastError();
+        setLastError(FileHelper::lastError());
+    } else {
+        clearLastError();
     }
 
     return removeProject(project);
@@ -299,10 +326,21 @@ bool FileWorkspace::deleteWorkspace(bool deleteProjects)
     }
 
     // Delete Workspace File
-    if (!FileHelper::removeFile(_filePath)) {
-        //qDebug() << FileHelper::lastError();
+    if (!FileHelper::removeFile(_fileInfo.filePath())) {
+        setLastError(FileHelper::lastError());
         return false;
     }
 
+    clearLastError();
     return true;
+}
+
+void FileWorkspace::onWorkspaceFileChanged()
+{
+    if(!_fileInfo.exists() && !_editMode){
+        // Workspace file was moved, this is just a simple solution.
+        save();
+    }
+
+    _fileSystemWatcher.addPath(_fileInfo.filePath());
 }

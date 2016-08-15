@@ -5,14 +5,15 @@
 #include "plugin/plugin_manager.h"
 #include "project_manager_gui.h"
 #include "project_manager_config.h"
-#include <QMenu>
 #include <QLabel>
+#include <QAction>
+#include <QMenu>
 #include <QCheckBox>
 
-SelectWorkspaceDialog::SelectWorkspaceDialog(ProjectManager* projectManager) : QDialog(), ui(new Ui::SelectWorkspaceDialog)
+SelectWorkspaceDialog::SelectWorkspaceDialog(ProjectManager* projectManager) : QDialog(), _ui(new Ui::SelectWorkspaceDialog)
 {
     // Setup UI
-    ui->setupUi(this);
+    _ui->setupUi(this);
 
     // Set project manager
     _projectManager = projectManager;
@@ -21,73 +22,95 @@ SelectWorkspaceDialog::SelectWorkspaceDialog(ProjectManager* projectManager) : Q
     setRecentUsedWorkspaces();
 
     // Connect UI elements
-    ui->treeWidgetRecentWorkspace->hideColumn(TreeWidgetColumn::Workspace);
-    ui->treeWidgetRecentWorkspace->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->treeWidgetRecentWorkspace, &QTreeWidget::customContextMenuRequested, this, &SelectWorkspaceDialog::customContextMenuRequested);
-    connect(ui->treeWidgetRecentWorkspace, &QTreeWidget::itemClicked, this, &SelectWorkspaceDialog::recentWorkspaceSelected);
-    connect(ui->treeWidgetRecentWorkspace, &QTreeWidget::itemDoubleClicked, this, &SelectWorkspaceDialog::loadRecentUsedWorkspace);
-    connect(ui->treeWidgetRecentWorkspace, &QTreeWidget::itemSelectionChanged, this, &SelectWorkspaceDialog::recentUsedWorkspaceSelectionChanged);
-
-    for (const QSharedPointer<AbstractWorkspace> abstractWorkspace : _projectManager->recentWorkspaces()) {
-        connect(abstractWorkspace.data(), &AbstractWorkspace::workspaceNameChanged, this, &SelectWorkspaceDialog::onWorkspaceNameChanged);
-        connect(abstractWorkspace.data(), &AbstractWorkspace::workspaceDescriptionChanged, this, &SelectWorkspaceDialog::onWorkspaceDescriptionChanged);
-        connect(abstractWorkspace.data(), &AbstractWorkspace::workspaceConnectionChanged, this, &SelectWorkspaceDialog::onWorkspaceConnectionChanged);
-    }
+    _ui->treeWidgetRecentWorkspace->hideColumn(TreeWidgetColumn::Workspace);
+    _ui->treeWidgetRecentWorkspace->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(_ui->treeWidgetRecentWorkspace, &QTreeWidget::customContextMenuRequested, this, &SelectWorkspaceDialog::customContextMenuRequested);
+    connect(_ui->treeWidgetRecentWorkspace, &QTreeWidget::itemClicked, this, &SelectWorkspaceDialog::recentWorkspaceSelected);
+    connect(_ui->treeWidgetRecentWorkspace, &QTreeWidget::itemDoubleClicked, this, &SelectWorkspaceDialog::loadRecentUsedWorkspace);
+    connect(_ui->treeWidgetRecentWorkspace, &QTreeWidget::itemSelectionChanged, this, &SelectWorkspaceDialog::recentUsedWorkspaceSelectionChanged);
 }
 
 SelectWorkspaceDialog::~SelectWorkspaceDialog()
 {
-    for (const QSharedPointer<AbstractWorkspace> abstractWorkspace : _projectManager->recentWorkspaces()) {
-        disconnect(abstractWorkspace.data(), 0, this, 0);
+     // Disconnect workspace change signals
+    for (const auto workspace : _projectManager->recentWorkspaces()) {
+        disconnect(workspace.data(), 0, this, 0);
     }
 
+    // Clear QTreeWidget
+    _ui->treeWidgetRecentWorkspace->clear();
+
     // Delete SelectWorkspaceDialog UI
-    delete ui;
+    delete _ui;
 }
 
 void SelectWorkspaceDialog::setRecentUsedWorkspaces()
 {
-    ui->treeWidgetRecentWorkspace->clear();
-    QSharedPointer<AbstractWorkspace> currentWorkspace = _projectManager->currentWorkspace();
+    for (const auto workspace : _projectManager->recentWorkspaces()) {
 
-    for (const QSharedPointer<AbstractWorkspace>& abstractWorkspace : _projectManager->recentWorkspaces()) {
-        QTreeWidgetItem* item = new QTreeWidgetItem(ui->treeWidgetRecentWorkspace);
-        item->setData(TreeWidgetColumn::Workspace, Qt::UserRole, QVariant::fromValue(abstractWorkspace));
-        item->setText(TreeWidgetColumn::Open, QString());
-        item->setText(TreeWidgetColumn::Default, QString());
-        item->setText(TreeWidgetColumn::LastUsed, abstractWorkspace->lastUsedDateTime());
-        item->setText(TreeWidgetColumn::Name, abstractWorkspace->name());
-        item->setText(TreeWidgetColumn::Type, abstractWorkspace->typeString());
-        item->setText(TreeWidgetColumn::Connection, abstractWorkspace->connectionString());
-        item->setToolTip(TreeWidgetColumn::Name, abstractWorkspace->description());
+        // Disconnect signal to prevent workspace change loop
+        disconnect(workspace.data(), &AbstractWorkspace::workspaceUpdated, this, &SelectWorkspaceDialog::onWorkspaceUpdated);
 
-        if (!abstractWorkspace->isValid()) {
-            item->setIcon(TreeWidgetColumn::Connection, QIcon(":/core/projectmanager/workspace_not_valid.png"));
-            item->setToolTip(TreeWidgetColumn::Connection, abstractWorkspace->lastError());
+        QTreeWidgetItem* item = nullptr;
+
+        // Find QTreeWidgetItem which matches to this workspace
+        for(QTreeWidgetItem* topLevelItem : treeWidgetItems()){
+            if(workspace->compare(topLevelItem->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>())){
+                item = topLevelItem;
+                break;
+            }
         }
 
-        if (abstractWorkspace->isDefault()) {
+        // If no QTreeWidgetItem was found create a new one
+        if(item == nullptr){
+            item = new QTreeWidgetItem(_ui->treeWidgetRecentWorkspace);
+            item->setData(TreeWidgetColumn::Workspace, Qt::UserRole, QVariant::fromValue(workspace));
+        }
+
+        // Set QTreeWidgetItem properties
+        item->setText(TreeWidgetColumn::LastUsed, workspace->lastUsedDateTime());
+        item->setText(TreeWidgetColumn::Name, workspace->name());
+        item->setText(TreeWidgetColumn::Type, workspace->typeString());
+        item->setText(TreeWidgetColumn::Connection, workspace->connectionString());
+        item->setToolTip(TreeWidgetColumn::Name, workspace->description());
+
+        // Show an error icon (connection string) if workspace fail the test
+        if (!workspace->test()) {
+            item->setIcon(TreeWidgetColumn::Connection, QIcon(":/core/projectmanager/workspace_not_valid.png"));
+            item->setToolTip(TreeWidgetColumn::Connection, workspace->lastError());
+        } else if(!item->icon(TreeWidgetColumn::Connection).isNull()){
+            // Remove the error icon (connection string) if workspace had an error and pass now the test.
+            item->setIcon(TreeWidgetColumn::Connection, QIcon());
+            item->setToolTip(TreeWidgetColumn::Connection, QString(""));
+        }
+
+        // Check if workspace is default property is set
+        if (workspace->isDefault()) {
             item->setText(TreeWidgetColumn::Default, QString("x"));
             item->setTextAlignment(TreeWidgetColumn::Default, Qt::AlignHCenter);
         }
 
-        if (!currentWorkspace.isNull() && currentWorkspace->compare(abstractWorkspace)) {
-            setSelectedWorkspace(abstractWorkspace);
+        // Check if workspace is current workspace
+        const auto currentWorkspace = _projectManager->currentWorkspace();
+        if (!currentWorkspace.isNull() && currentWorkspace->compare(workspace)) {
+            setSelectedWorkspace(workspace);
             item->setText(TreeWidgetColumn::Open, QString("x"));
             item->setTextAlignment(TreeWidgetColumn::Open, Qt::AlignHCenter);
-            ui->treeWidgetRecentWorkspace->setCurrentItem(item);
+            _ui->treeWidgetRecentWorkspace->setCurrentItem(item);
         }
+
+        // Connect workspace change signal
+        connect(workspace.data(), &AbstractWorkspace::workspaceUpdated, this, &SelectWorkspaceDialog::onWorkspaceUpdated);
     }
 
-    ui->treeWidgetRecentWorkspace->header()->resizeSection(TreeWidgetColumn::Open, 55);
-    ui->treeWidgetRecentWorkspace->header()->resizeSection(TreeWidgetColumn::Default, 55);
-    ui->treeWidgetRecentWorkspace->resizeColumnToContents(TreeWidgetColumn::LastUsed);
-    ui->treeWidgetRecentWorkspace->resizeColumnToContents(TreeWidgetColumn::Name);
-    ui->treeWidgetRecentWorkspace->resizeColumnToContents(TreeWidgetColumn::Type);
-    ui->treeWidgetRecentWorkspace->resizeColumnToContents(TreeWidgetColumn::Connection);
-    ui->treeWidgetRecentWorkspace->sortByColumn(TreeWidgetColumn::LastUsed, Qt::DescendingOrder);
-
-    _projectManager->saveRecentWorkspacesSettings();
+    // Config QTreeWidget (recent used workspace list) layout settings
+    _ui->treeWidgetRecentWorkspace->header()->resizeSection(TreeWidgetColumn::Open, 55);
+    _ui->treeWidgetRecentWorkspace->header()->resizeSection(TreeWidgetColumn::Default, 55);
+    _ui->treeWidgetRecentWorkspace->resizeColumnToContents(TreeWidgetColumn::LastUsed);
+    _ui->treeWidgetRecentWorkspace->resizeColumnToContents(TreeWidgetColumn::Name);
+    _ui->treeWidgetRecentWorkspace->resizeColumnToContents(TreeWidgetColumn::Type);
+    _ui->treeWidgetRecentWorkspace->resizeColumnToContents(TreeWidgetColumn::Connection);
+    _ui->treeWidgetRecentWorkspace->sortByColumn(TreeWidgetColumn::LastUsed, Qt::DescendingOrder);
 }
 
 QSharedPointer<AbstractWorkspace> SelectWorkspaceDialog::selectedWorkspace() const
@@ -172,14 +195,15 @@ QDialog* SelectWorkspaceDialog::createDialogWorkspaceGui(const WorkspaceGuiType 
     return dialogWorkspaceGui;
 }
 
-QList<QTreeWidgetItem*> SelectWorkspaceDialog::treeWidgetItems() const
+QVector<QTreeWidgetItem *> SelectWorkspaceDialog::treeWidgetItems() const
 {
-    QList<QTreeWidgetItem*> items;
+    QVector<QTreeWidgetItem*> items;
 
-    for (int i = 0; i < ui->treeWidgetRecentWorkspace->topLevelItemCount(); ++i) {
-        if (ui->treeWidgetRecentWorkspace->topLevelItem(i) != nullptr) {
-            items.append(ui->treeWidgetRecentWorkspace->topLevelItem(i));
-        }\
+    for (int i = 0; i < _ui->treeWidgetRecentWorkspace->topLevelItemCount(); ++i) {
+        QTreeWidgetItem* item = _ui->treeWidgetRecentWorkspace->topLevelItem(i);
+        if (item != nullptr) {
+            items.append(item);
+        }
     }
 
     return items;
@@ -187,20 +211,20 @@ QList<QTreeWidgetItem*> SelectWorkspaceDialog::treeWidgetItems() const
 
 void SelectWorkspaceDialog::customContextMenuRequested(const QPoint& position)
 {
-    QTreeWidgetItem* item = ui->treeWidgetRecentWorkspace->itemAt(position);
+    QTreeWidgetItem* item = _ui->treeWidgetRecentWorkspace->itemAt(position);
 
     if (item != nullptr) {
-        QSharedPointer<AbstractWorkspace> workspace = item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
+        auto workspace = item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
 
         if (!workspace.isNull()) {
-            QPoint menuePosition = ui->treeWidgetRecentWorkspace->mapToGlobal(position);
+            QPoint menuePosition = _ui->treeWidgetRecentWorkspace->mapToGlobal(position);
             menuePosition.setY(menuePosition.y() + 15);
-            showContextMenuRecentWorkspace(menuePosition, workspace);
+            showContextMenu(menuePosition, workspace);
         }
     }
 }
 
-void SelectWorkspaceDialog::showContextMenuRecentWorkspace(const QPoint& position, const QSharedPointer<AbstractWorkspace>& workspace)
+void SelectWorkspaceDialog::showContextMenu(const QPoint& position, const QSharedPointer<AbstractWorkspace>& workspace)
 {
     QMenu menu;
     QAction* actionSetDefault = menu.addAction(QLatin1String("Set as default Workspace"));
@@ -211,7 +235,7 @@ void SelectWorkspaceDialog::showContextMenuRecentWorkspace(const QPoint& positio
     QAction* actionRemoveFromRecentList = menu.addAction(QString("Remove '%1' from List").arg(workspace->name()));
     actionSetDefault->setCheckable(true);
     actionSetDefault->setChecked(workspace->isDefault());
-    int selectedItemCount = ui->treeWidgetRecentWorkspace->selectedItems().count();
+    int selectedItemCount = _ui->treeWidgetRecentWorkspace->selectedItems().count();
 
     if (selectedItemCount > 1) {
         actionSetDefault->setEnabled(false);
@@ -222,52 +246,72 @@ void SelectWorkspaceDialog::showContextMenuRecentWorkspace(const QPoint& positio
         actionRemoveFromRecentList->setText(QString("Remove all selected from List."));
     }
 
-    connect(actionEditWorkspace, &QAction::triggered, this, &SelectWorkspaceDialog::showDialogEditWorkspace);
-    connect(actionDeleteWorkspace, &QAction::triggered, this, &SelectWorkspaceDialog::deleteWorkspace);
+    if(workspace->isValid()){
+        connect(actionEditWorkspace, &QAction::triggered, this, &SelectWorkspaceDialog::showDialogEditWorkspace);
+        connect(actionDeleteWorkspace, &QAction::triggered, this, &SelectWorkspaceDialog::deleteWorkspace);
+        connect(actionSetDefault, &QAction::toggled, this, &SelectWorkspaceDialog::defaultWorkspaceChange);
+    } else {
+        actionSetDefault->setEnabled(false);
+        actionDeleteWorkspace->setEnabled(false);
+        actionSetDefault->setChecked(false);
+        actionEditWorkspace->setEnabled(false);
+
+        menu.addAction(menu.addSeparator());
+        QAction* actionSearchWorkspace = menu.addAction(QString("Search '%1'...").arg(workspace->name()));
+        connect(actionSearchWorkspace, &QAction::triggered, this, &SelectWorkspaceDialog::searchRecentUsedWorkspaces);
+    }
+
     connect(actionRemoveFromRecentList, &QAction::triggered, this, &SelectWorkspaceDialog::removeFromRecentList);
-    connect(actionSetDefault, &QAction::toggled, this, &SelectWorkspaceDialog::defaultWorkspaceChange);
+
     menu.exec(position);
 }
 
 void SelectWorkspaceDialog::acceptWorkspace(QSharedPointer<AbstractWorkspace> workspace)
 {
-    if (!workspace.isNull()) {
-        // Add current workspace into recent used workspace vector.
-        _projectManager->addRecentWorkspace(workspace);
-        // Set selected workspace and save it
-        setSelectedWorkspace(workspace);
+    // Add current workspace into recent used workspace vector.
+    _projectManager->addRecentWorkspace(workspace);
+    // Set selected workspace and save it
+    setSelectedWorkspace(workspace);
 
-        if (workspace->isDefault()) {
-            defaultWorkspaceChange(true);
-        }
-
-        accept();
+    if (workspace->isDefault()) {
+        defaultWorkspaceChange(true);
     }
+
+    accept();
 }
 
 void SelectWorkspaceDialog::recentWorkspaceSelected(QTreeWidgetItem* item, int column)
 {
     Q_UNUSED(column);
-    QSharedPointer<AbstractWorkspace> workspace = item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
-    setSelectedWorkspace(workspace);
+    setSelectedWorkspace(item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>());
 }
 
 void SelectWorkspaceDialog::loadRecentUsedWorkspace(QTreeWidgetItem* item, int column)
 {
     Q_UNUSED(column);
-    QSharedPointer<AbstractWorkspace> workspace;
-    workspace = item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
+    if(item == nullptr){
+        return;
+    }
+
+    auto workspace = item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
 
     if (!workspace.isNull()) {
-        if (!workspace->test()) {
+        if(!workspace->test()){
             QMessageBox::warning(this, tr("Load Workspace."),
-                                 tr("This Workspace is invalid.\n\n%1").arg(workspace->lastError()),
+                                 tr("Workspace is not valid.\n\n%1").arg(workspace->lastError()),
                                  QMessageBox::Ok);
+
+            item->setIcon(TreeWidgetColumn::Connection, QIcon(":/core/projectmanager/workspace_not_valid.png"));
+            item->setToolTip(TreeWidgetColumn::Connection, workspace->lastError());
             return;
         }
 
-        setSelectedWorkspace(workspace);
-        accept();
+        if(!item->icon(TreeWidgetColumn::Connection).isNull()){
+            item->setIcon(TreeWidgetColumn::Connection, QIcon());
+            item->setToolTip(TreeWidgetColumn::Connection, QString(""));
+        }
+
+        acceptWorkspace(workspace);
     }
 }
 
@@ -277,9 +321,9 @@ void SelectWorkspaceDialog::setSelectedWorkspace(const QSharedPointer<AbstractWo
     _selectedWorkspace = workspace;
 
     if (!_selectedWorkspace.isNull()) {
-        ui->buttonAcceptDialog->setEnabled(true);
+        _ui->buttonAcceptDialog->setEnabled(true);
     } else {
-        ui->buttonAcceptDialog->setEnabled(false);
+        _ui->buttonAcceptDialog->setEnabled(false);
     }
 }
 
@@ -290,7 +334,7 @@ void SelectWorkspaceDialog::clearSelectedWorkspace()
         _selectedWorkspace.clear();
     }
 
-    ui->buttonAcceptDialog->setEnabled(false);
+    _ui->buttonAcceptDialog->setEnabled(false);
 }
 
 QVector<AbstractWorkspaceGui*> SelectWorkspaceDialog::workspaceGuiVector() const
@@ -305,11 +349,10 @@ void SelectWorkspaceDialog::setWorkspaceGuiVector(const QVector<AbstractWorkspac
 
 void SelectWorkspaceDialog::recentUsedWorkspaceSelectionChanged()
 {
-    const QList<QTreeWidgetItem*> items = ui->treeWidgetRecentWorkspace->selectedItems();
+    const QList<QTreeWidgetItem*> items = _ui->treeWidgetRecentWorkspace->selectedItems();
 
     if (!items.isEmpty()) {
-        QSharedPointer<AbstractWorkspace> workspace = items.first()->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
-        setSelectedWorkspace(workspace);
+        setSelectedWorkspace(items.first()->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>());
         return;
     }
 
@@ -319,7 +362,7 @@ void SelectWorkspaceDialog::recentUsedWorkspaceSelectionChanged()
 void SelectWorkspaceDialog::defaultWorkspaceChange(bool checked)
 {
     for (QTreeWidgetItem* item : treeWidgetItems()) {
-        QSharedPointer<AbstractWorkspace> workspace = item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
+        auto workspace = item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
 
         if (item->isSelected() && checked) {
             item->setText(TreeWidgetColumn::Default, QString("x"));
@@ -336,14 +379,14 @@ void SelectWorkspaceDialog::defaultWorkspaceChange(bool checked)
 
 void SelectWorkspaceDialog::removeFromRecentList()
 {
-    QList<QTreeWidgetItem*> items = ui->treeWidgetRecentWorkspace->selectedItems();
+    QList<QTreeWidgetItem*> items = _ui->treeWidgetRecentWorkspace->selectedItems();
 
     if (!items.isEmpty()) {
-        QString questionRemove = QStringLiteral("Do you want to remove all selected workspaces from list?");
+        QString questionRemove = tr("Do you want to remove all selected workspaces from list?");
 
         if (items.count() == 1) {
-            QSharedPointer<AbstractWorkspace> workspace = items.first()->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
-            questionRemove = QStringLiteral("Do you want to remove workspace '%1' from list?").arg(workspace->name());
+            auto workspace = items.first()->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
+            questionRemove = tr("Do you want to remove workspace '%1' from list?").arg(workspace->name());
         }
 
         int ret = QMessageBox::question(this, tr("Remove Workspace."),
@@ -352,20 +395,17 @@ void SelectWorkspaceDialog::removeFromRecentList()
 
         if (ret == QMessageBox::Ok) {
             bool recentUsedWorkspaceVectorChanged = false;
-
-            QVector<QSharedPointer<AbstractWorkspace>> recentUsedWorkspaces = _projectManager->recentWorkspaces();
+            auto recentUsedWorkspaces = _projectManager->recentWorkspaces();
 
             for (QTreeWidgetItem* item : items) {
-                QSharedPointer<AbstractWorkspace> workspace;
-                workspace = item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
+                auto workspace = item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
 
                 if (!workspace.isNull() && recentUsedWorkspaces.contains(workspace)) {
-                    int indexItem = ui->treeWidgetRecentWorkspace->indexOfTopLevelItem(item);
+                    int indexItem = _ui->treeWidgetRecentWorkspace->indexOfTopLevelItem(item);
                     recentUsedWorkspaces.removeOne(workspace);
-                    delete ui->treeWidgetRecentWorkspace->takeTopLevelItem(indexItem);
+                    delete _ui->treeWidgetRecentWorkspace->takeTopLevelItem(indexItem);
                     recentUsedWorkspaceVectorChanged = true;
                 }
-
             }
 
             if (recentUsedWorkspaceVectorChanged) {
@@ -380,13 +420,13 @@ void SelectWorkspaceDialog::removeFromRecentList()
 
 void SelectWorkspaceDialog::deleteWorkspace()
 {
-    QList<QTreeWidgetItem*> items = ui->treeWidgetRecentWorkspace->selectedItems();
+    QList<QTreeWidgetItem*> items = _ui->treeWidgetRecentWorkspace->selectedItems();
 
     if (!items.isEmpty()) {
-        QString questionRemove = QStringLiteral("Do you want to delete all selected workspaces ?\n");
+        QString questionRemove = tr("Do you want to delete all selected workspaces ?\n");
 
         if (items.count() == 1) {
-            questionRemove = QStringLiteral("Do you want to delete workspace '%1'' ?\n").
+            questionRemove = tr("Do you want to delete workspace '%1'' ?\n").
                              arg((items.first()->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>())->name());
         }
 
@@ -398,11 +438,9 @@ void SelectWorkspaceDialog::deleteWorkspace()
         deleteWorkspaceMessageBox.setIcon(QMessageBox::Question);
 
         if (deleteWorkspaceMessageBox.exec() == QMessageBox::Ok) {
-            QSharedPointer<AbstractWorkspace> workspace;
-
             for (QTreeWidgetItem* item : treeWidgetItems()) {
                 if (item->isSelected()) {
-                    workspace = item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
+                    auto workspace = item->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
 
                     if (workspace->isOpen()) {
                         QMessageBox::warning(this, tr("Delete Workspace '%1' failed.").arg(workspace->name()),
@@ -411,7 +449,7 @@ void SelectWorkspaceDialog::deleteWorkspace()
                     }
 
                     _projectManager->removeRecentWorkspaces(workspace);
-                    delete ui->treeWidgetRecentWorkspace->takeTopLevelItem(ui->treeWidgetRecentWorkspace->indexOfTopLevelItem(item));
+                    delete _ui->treeWidgetRecentWorkspace->takeTopLevelItem(_ui->treeWidgetRecentWorkspace->indexOfTopLevelItem(item));
                     workspace->deleteWorkspace(deleteProjectsCheckBox);
                 }
             }
@@ -437,11 +475,12 @@ void SelectWorkspaceDialog::showDialogEditWorkspace()
 {
     QPushButton* button = qobject_cast<QPushButton*>(sender());
 
+    // Item (workspace) is selected in treewidget and this action was performed by item context menue (edit workspace).
     if (button == nullptr) {
-        QList<QTreeWidgetItem*> items = ui->treeWidgetRecentWorkspace->selectedItems();
+        QList<QTreeWidgetItem*> items = _ui->treeWidgetRecentWorkspace->selectedItems();
 
         if (!items.isEmpty()) {
-            QSharedPointer<AbstractWorkspace> workspace = items.first()->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
+            auto workspace = items.first()->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
 
             if (!workspace.isNull()) {
                 AbstractWorkspaceGui* workspaceGui = ProjectManagerGui::abstractWorkspaceGuiClass(workspace, _workspaceGuiVector);
@@ -451,22 +490,29 @@ void SelectWorkspaceDialog::showDialogEditWorkspace()
             }
         }
     } else {
+        // No item (workspace) is selected in treewidget and this action was performed by the edit button
         QDialog* dialogEditWorkspace = createDialogWorkspaceGui(WorkspaceGuiType::editWorkspace, _workspaceGuiVector);
         dialogEditWorkspace->exec();
     }
 }
 
-void SelectWorkspaceDialog::onWorkspaceNameChanged(const QString& workspaceName)
+void SelectWorkspaceDialog::onWorkspaceUpdated()
 {
     setRecentUsedWorkspaces();
 }
 
-void SelectWorkspaceDialog::onWorkspaceConnectionChanged(const QString& workspaceConnection)
+void SelectWorkspaceDialog::searchRecentUsedWorkspaces()
 {
-    setRecentUsedWorkspaces();
-}
+    QList<QTreeWidgetItem*> items = _ui->treeWidgetRecentWorkspace->selectedItems();
 
-void SelectWorkspaceDialog::onWorkspaceDescriptionChanged(const QString& workspaceName)
-{
-    setRecentUsedWorkspaces();
+    if (!items.isEmpty()) {
+        auto workspace = items.first()->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
+
+        for(AbstractWorkspaceGui* workspaceGui : _workspaceGuiVector){
+            if(workspaceGui->isTypeFriendly(workspace)){
+                workspaceGui->showChangeSourceDialog(workspace);
+                return;
+            }
+        }
+    }
 }

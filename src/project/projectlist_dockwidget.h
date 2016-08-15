@@ -27,20 +27,22 @@ public:
     void addProjects(const QVector<QSharedPointer<ProjectGui>>& projectGui);
     void removeAllProjects();
     bool removeProject(const QSharedPointer<ProjectGui>& projectGui);
+    bool contains(const QSharedPointer<ProjectGui>& projectGui);
 
 private slots:
-    void customContextMenuRequested(const QPoint& clickPosition);
+    void customContextMenuRequested(const QPoint& position);
     void listWidgetClicked(QListWidgetItem* item);
 
 signals:
     void loadProject(QSharedPointer<ProjectGui> projectGui);
 
 private:
-    Ui::ProjectListDockWidget* ui;
-    void showProjectContextMenu(const QPoint& globalPosition, const QSharedPointer<ProjectGui>& projectGui);
+    Ui::ProjectListDockWidget* _ui;
+    void showProjectContextMenu(const QPoint& globalPosition, const QSharedPointer<ProjectGui> &projectGui);
 
 signals:
-    void showWorkspaceContextMenu(const QPoint& clickPosition);
+    void showWorkspaceContextMenu(const QPoint& position);
+    void showMultiProjectContextMenu(const QPoint& position, const QList<QSharedPointer<ProjectGui>> projectGuis);
 };
 
 #endif // PROJECT_LIST_DOCK_WIDGET_H

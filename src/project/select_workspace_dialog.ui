@@ -9,12 +9,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
+    <width>680</width>
     <height>400</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Manage Projects</string>
+   <string>Workspace Manager</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

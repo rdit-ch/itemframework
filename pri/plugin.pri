@@ -8,7 +8,7 @@ INCLUDEPATH     += \
                    $$PROJECT_ROOT/itemframework/include \
                    $$PWD/ui_header
 
-QMAKE_LFLAGS    += -Wl,--unresolved-symbols=report-all
+!mac: QMAKE_LFLAGS    += -Wl,--unresolved-symbols=report-all
 
 UI_DIR          =  $$_PRO_FILE_PWD_/ui_header/
 OBJECTS_DIR     =  $$_PRO_FILE_PWD_/obj/

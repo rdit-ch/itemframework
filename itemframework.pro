@@ -215,6 +215,7 @@ OTHER_FILES += style.astylerc
 
 unix:macx {
 	LIBS += -L"/usr/local/lib/"
+        QMAKE_LFLAGS_SONAME  = -Wl,-install_name,@rpath/
 }
 
 UI_DIR       =  $$PWD/ui_header/

@@ -4,7 +4,7 @@ CONFIG      +=  c++11
 TEMPLATE    =   lib
 VERSION     +=  0.1
 DEFINES     +=  API_VERSION=\\\"$$VERSION\\\" #Version of the Public api (equal to lib version^^)
-                CORE_BUILD=1 #used for CORE_EXPORT macro switch in appcore.h
+DEFINES     +=  CORE_BUILD=1 #used for CORE_EXPORT macro switch in appcore.h
 
 SOURCE_VERSION = $$system(git describe --always --tags) #Source Code version
 DEFINES     += SOURCE_VERSION=\\\"$$SOURCE_VERSION\\\"

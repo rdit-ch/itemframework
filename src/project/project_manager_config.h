@@ -15,7 +15,7 @@
  *      RegExp -> regular expression
  */
 
-// Autosave in ms (  10 seconds)
+// Autosave in ms ( 10 seconds)
 #define AutosaveInerval  10 * 1000
 
 // Helpers

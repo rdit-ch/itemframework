@@ -646,7 +646,6 @@ void FileWorkspaceGui::createProjectsFromImport(const QStringList &projectPaths,
         }
 
         if(generalOverwrite == 1 || projectOverwrite == 1){
-
             QDomDocument projectDomDocument = FileHelper::domDocumentFromXMLFile(srcProjectFile.fileName());
             if(dstProjectFile.exists()){
                 QSharedPointer<AbstractProject> project = fileWorkspace->project(dstProjectFile.fileName());
@@ -660,7 +659,10 @@ void FileWorkspaceGui::createProjectsFromImport(const QStringList &projectPaths,
                     }
                 }
                 if(!dstProjectFile.remove()){
-                    qDebug() << tr("Could not remove file \"%1\"").arg(dstProjectFile.fileName());
+                    QMessageBox::warning(0, tr("Error remove File"),
+                                                tr("Could not remove file \"%1\"").arg(dstProjectFile.fileName()),
+                                                QMessageBox::Ok,
+                                                QMessageBox::Ok);
                     continue;
                 }
             }

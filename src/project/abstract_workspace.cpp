@@ -383,15 +383,15 @@ void AbstractWorkspace::resetExternChangedProjects() const
 
 bool AbstractWorkspace::saveProjects() const
 {
-    bool saveProjectsSuccessful = true;
+    bool success = true;
 
     for (const QSharedPointer<AbstractProject>& project : _projects) {
         if (!project->save()) {
-            saveProjectsSuccessful = false;
+            success = false;
         }
     }
 
-    return saveProjectsSuccessful;
+    return success;
 }
 
 void AbstractWorkspace::resetProjects() const

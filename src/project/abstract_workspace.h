@@ -15,9 +15,9 @@
 
 /**
  * The AbstractWorkspace class defines a functional basic class for e.g. a file and sql
- * workspace. A workspace can handle RTV projects.
+ * workspace. A workspace can handle Traviz projects.
  *
- * This class is part of the project manager feature.
+ * This class is part of the projectmanager feature.
  */
 
 class AbstractWorkspace : public QObject
@@ -29,14 +29,28 @@ public:
     virtual ~AbstractWorkspace();
 
     /**
+     * @brief This static function creates a clean workspace DomDocument.
+     *
+     * @param name The Workspace name.
+     * @param version The Workspace version.
+     * @param description The Workspace description.
+     *
+     * @return Returns a clean workspace DomDocument.
+     */
+    static QDomDocument workspaceDomDocumentTemplate(const QString& name, const QString& version, const QString& description);
+
+    /**
      * @brief Initialize the Workspace and set isValid flag.
      * This function must be called, otherwise the workspace can't be valid.
+     *
+     * \sa update
      */
     virtual void init() = 0;
 
     /**
-     * @brief
+     * @brief Update the workspace after property changes.
      *
+     * \sa init
      */
     virtual void update() = 0;
 
@@ -50,7 +64,7 @@ public:
     virtual bool compare(const QSharedPointer<AbstractWorkspace>& otherWorkspace) const = 0;
 
     /**
-     * @brief Save this Workspace.
+     * @brief Save workspace with all settings.
      *
      * @return Returns \c true if the Workspace was successfully saved, otherwise returns \c false.
      */
@@ -60,44 +74,96 @@ public:
      * @brief Workspace test procedure.
      * The Test-Procedure is defined by the specific workspace class, which inherits from AbstractWorkspace class.
      *
-     * @return Returns \c true if the Test was successfull, otherwise returns \c false.
+     * @return Returns \c true if the process was successfull, otherwise returns \c false.
      */
     virtual bool test() = 0;
 
     /**
-     * @brief Delete this Workspace.
+     * @brief Delete workspace.
      * The function deletes this workspace and all included projects, if the \c deleteProjects flag is set \c true.
      *
      * @param deleteProjects The delete all projects flag (default = false).
      *
-     * @return Returns \c true if the delete was successfull, otherwise returns \c false.
+     * @return Returns \c true if the process was successfull, otherwise returns \c false.
+     *
+     * \sa deleteProject
      */
     virtual bool deleteWorkspace(bool deleteProjects = false) = 0;
 
+    /**
+     * @brief Delete a project and remove it from workspace.
+     *
+     * @param project The project which should be deleted.
+     *
+     * @return Returns \c true if the process was successfull, otherwise returns \c false.
+     *
+     * \sa removeProject
+     * \sa removeProjects
+     * \sa saveProjects
+     */
     virtual bool deleteProject(const QSharedPointer<AbstractProject>& project) = 0;
 
-    bool saveProjects() const;
-
-    void resetProjects() const;
-
-    bool saveExternChangedProjects() const;
-
-    void resetExternChangedProjects() const;
-
+    /**
+     * @brief Remove a project from workspace. The project will not be deleted.
+     *
+     * @param project The project which should be removed.
+     *
+     * @return Returns \c true if the process was successfull, otherwise returns \c false.
+     *
+     * \sa deleteProject
+     * \sa removeProjects
+     * \sa saveProjects
+     */
     bool removeProject(const QSharedPointer<AbstractProject>& project);
 
+    /**
+     * @brief Remove all projects from workspace. The projects will not be deleted.
+     *
+     * @return Returns \c true if the process was successfull, otherwise returns \c false.
+     *
+     * \sa removeProject
+     * \sa deleteProject
+     * \sa saveProjects
+     */
     bool removeProjects();
 
     /**
-     * @brief This static function creates a clean workspace DomDocument.
+     * @brief Save all projects in workspace.
      *
-     * @param name The Workspace name.
-     * @param version The Workspace version.
-     * @param description The Workspace description.
+     * @return Returns \c true if the process was successfull, otherwise returns \c false.
      *
-     * @return Returns a clean workspace DomDocument.
+     * \sa removeProject
+     * \sa removeProjects
+     * \sa deleteProject
      */
-    static QDomDocument workspaceDomDocumentTemplate(const QString& name, const QString& version, const QString& description);
+    bool saveProjects() const;
+
+    /**
+     * @brief Save all projects in workspace which are changed by extern.
+     *
+     * @return Returns \c true if the process was successfull, otherwise returns \c false.
+     *
+     * \sa saveProjects
+     * \sa resetExternChangedProjects
+     * \sa resetProjects
+     */
+    bool saveExternChangedProjects() const;
+
+    /**
+     * @brief Reset all projects in workspace.
+     * Reload the complete project structure from xml. All settings, which are not saved will be
+     * discarded and the project isDirty flag will be set to false.
+     */
+    void resetProjects() const;
+
+    /**
+     * @brief Reset all projects in workspace which are changed by extern.
+     *
+     * \sa resetProjects
+     * \sa saveExternChangedProjects
+     * \sa saveProjects
+     */
+    void resetExternChangedProjects() const;
 
     /**
      * @return Returns \c a stringlist containing all project names, which are existent in workspace.
@@ -112,6 +178,14 @@ public:
      * @return Returns \c true if the DomDocument is valid, otherwise returns \c false.
      */
     bool validateWorkspaceDomDocument(const QDomDocument& domDocument);
+
+    /**
+     * @return Returns the workspace dom document.
+     *
+     * \sa validateWorkspaceDomDocument
+     * \sa workspaceDomDocumentTemplate
+     */
+    QDomDocument workspaceDomDocument() const;
 
     /**
      * @return \c Returns the workspace name.
@@ -137,7 +211,7 @@ public:
     bool isDefault() const;
 
     /**
-     * @brief Set workspace as default workspace. On RTV start this workspace will be loaded directly.
+     * @brief Set workspace as default workspace. On Traviz start this workspace will be loaded directly.
      * No workspace manager will be shown.
      *
      * @param isDefault The enable bool flag.
@@ -241,6 +315,21 @@ public:
     QSharedPointer<AbstractProject> project(QString connectionString) const;
 
     /**
+     * @brief Add a project into workspace.
+     *
+     * @param project The abstract project which should be inserted.
+     *
+     * @return Returns \c true if the process was successfull, otherwise returns \c false.
+     *
+     * \sa setProjects
+     * \sa projects
+     * \sa projectCount
+     * \sa deleteProject
+     * \sa removeProject
+     */
+    bool addProject(const QSharedPointer<AbstractProject>& project);
+
+    /**
      * @brief Set the vector of projects for a workspace.
      *
      * @param projects The vector of shared pointer to projects.
@@ -250,7 +339,6 @@ public:
      */
     void setProjects(const QVector<QSharedPointer<AbstractProject>>& projects);
 
-
     /**
      * @return Returns \c the number of projects in this workspace.
      *
@@ -259,12 +347,19 @@ public:
      */
     int projectCount() const;
 
-
+    /**
+     * @brief Set the Workspace connection string. The \c connectionString is unique source identifier inside a running
+     * Traviz application.
+     *
+      * @param connectionString The connection string.
+     *
+     * \sa connectionString
+     */
     void setConnectionString(const QString& connectionString);
 
     /**
      * @brief The Workspace connection string holds the source connection information (e.g File-Workspace -> filename,
-     * Sql-Workspace -> Server and user information). The \c connectionString is unique inside a running RTV
+     * Sql-Workspace -> Server and user information). The \c connectionString is unique inside a running Traviz
      * application and can be used to identifier a workspace.
      *
      * @return Returns \c the workspace connection string.
@@ -327,21 +422,42 @@ public:
 
     /**
      * @return Returns the last occured error as a string.
+     *
+     * sa clearLastError
      */
     const QString lastError() const;
+
+    /**
+     * @return Clear the lastError string.
+     *
+     * \sa lastError
+     */
     void clearLastError();
 
-    QString lastUsedDateTime() const;
-
-    void setLastUsedDateTime(const QString& lastUsedDateTime);
-
+    /**
+     * @param project The abstract project.
+     *
+     * @return Returns \c true if the workspace contains an occurrence of project;, otherwise returns \c false.
+     *
+     * \sa projectCount
+     */
     bool contains(const QSharedPointer<AbstractProject>& project) const;
 
-    bool addProject(const QSharedPointer<AbstractProject>& project);
+    /**
+     * @return Returns the last used date time of the workspace as string.
+     *
+     * \sa setLastUsedDateTime
+     */
+    QString lastUsedDateTime() const;
 
-    QDomDocument workspaceDomDocument() const;
-
-
+    /**
+     * @brief Set the workspace last used date value ("MM/dd/yyyy hh:mm:ss")
+     *
+     * @param lastUsedDateTime The last used date time of the workspace.
+     *
+     * \sa lastUsedDateTime
+     */
+    void setLastUsedDateTime(const QString& lastUsedDateTime);
 
 protected:
     /**
@@ -381,6 +497,15 @@ protected:
      */
     bool setWorkspaceProperties(const QDomDocument& domDocument);
 
+    /**
+     * @brief Set the workspace dom document. The domdocument hold all information about the workspace
+     * (e.g version, name, last used date, projects).
+     *
+     * @param workspaceDomDocument The domdocument.
+     *
+     * \sa workspaceDomDocument
+     * \sa validateWorkspaceDomDocument
+     */
     void setWorkspaceDomDocument(const QDomDocument &workspaceDomDocument);
 
 private:

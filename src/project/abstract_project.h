@@ -13,20 +13,12 @@
 #include <QDomElement>
 #include "helper/settings_scope.h"
 
-
-
 class AbstractProject : public QObject
 {
     Q_OBJECT
 
 public:
     virtual ~AbstractProject();
-
-    virtual bool autosaveExists() = 0;
-
-    virtual void cleanAutosave() = 0;
-
-    virtual QString autosaveInfo() = 0;
 
     /**
      * @brief Save the project in a xml structure.
@@ -42,9 +34,48 @@ public:
      *
      * @return Returns \c true if the save procedure was successful, otherwise returns \c false.
      *
-     * \sa autosave
+     * \sa save
+     * \sa autosaveExists
+     * \sa cleanAutosave
+     * \sa autosaveInfo
      */
     virtual bool autosave() = 0;
+
+    /**
+     * @brief Check autosave project xml exists.
+     *
+     * @return Returns \c true if the autosave xml exists, otherwise returns \c false.
+     *
+     * \sa save
+     * \sa autosave
+     * \sa cleanAutosave
+     * \sa autosaveInfo
+     */
+    virtual bool autosaveExists() = 0;
+
+    /**
+     * @brief Remove the autosave project xml structure.
+     *
+     * @return Returns \c true if the project xml structure was successfully removed, otherwise returns \c false.
+     *
+     * \sa save
+     * \sa autosave
+     * \sa autosaveExists
+     * \sa autosaveInfo
+     */
+    virtual void cleanAutosave() = 0;
+
+    /**
+     * @brief Information about the autosave project xml structure.
+     *
+     * @return Returns a QString with the autosave information.
+     *
+     * \sa save
+     * \sa autosave
+     * \sa autosaveExists
+     * \sa cleanAutosave
+     */
+    virtual QString autosaveInfo() = 0;
 
     /**
      * @brief Reload the complete project structure from xml.
@@ -66,6 +97,12 @@ public:
      */
     virtual QDomDocument domDocument() const = 0;
 
+    /**
+     * @return Returns the domDocument xml structure from the autosave process.
+     *
+     * \sa domDocument
+     * \sa setDomDocument
+     */
     virtual QDomDocument autosaveDomDocument() const = 0;
 
     /**
@@ -122,7 +159,7 @@ public:
 
     /**
      * @brief This function validates a project domDocument xml structure. A validation error
-     * can be checked by lastError.
+     * can be printed by lastError.
      *
      * @param domDocument The domDocument, which has to be validated.
      *
@@ -310,19 +347,19 @@ signals:
 private:
     bool loadSettingsScope();
     SettingsScope* _parentSettingsScopes = nullptr;
+    QScopedPointer<SettingsScope> _settingsScope;
     int _majorProjectVersion;
     int _minorProjectVersion;
     QString _version;
     QString _name;
     QString _description;
     QString _lastError;
+    QString _connectionString;
     bool _isDirty = false;
     bool _isValid = false;
     bool _isFastLoad = false;
     bool _isLoaded = false;
     bool _isExternChanged = false;
-    QString _connectionString;
-    QScopedPointer<SettingsScope> _settingsScope;
 };
 
 #endif // ABSTRACT_PROJECT_H

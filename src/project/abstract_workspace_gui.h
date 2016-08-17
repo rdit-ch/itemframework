@@ -54,7 +54,6 @@ public:
     bool unloadAllProjectsExceptVisible();
     QMenu* switchWorkspaceMenu() const;
     void setSwitchWorkspaceMenu(QMenu* switchWorkspaceMenu);
-
     QSharedPointer<ProjectGui> projectGui(const QSharedPointer<AbstractProject>& project);
 
 private:

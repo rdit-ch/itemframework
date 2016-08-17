@@ -9,8 +9,8 @@
 #define FILEHELPER_H
 
 #include <QFile>
-#include <QDomDocument>
-#include <QString>
+
+class QDomDocument;
 
 class FileHelper
 {

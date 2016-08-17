@@ -13,7 +13,6 @@ class FileWorkspace : public AbstractWorkspace
 public:
     Q_INVOKABLE FileWorkspace();
     ~FileWorkspace();
-
     static QSharedPointer<FileWorkspace> createFileWorkspaceFromFile(const QString& filePath);
 
     bool compare(const QSharedPointer<AbstractWorkspace>& otherWorkspace) const Q_DECL_OVERRIDE;

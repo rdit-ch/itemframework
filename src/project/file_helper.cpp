@@ -1,6 +1,6 @@
-#include <QDir>
 #include "file_helper.h"
-#include <QDebug>
+#include <QDir>
+#include <QDomDocument>
 
 static QString _lastError;
 

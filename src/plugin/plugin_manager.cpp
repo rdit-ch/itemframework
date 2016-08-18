@@ -203,73 +203,62 @@ bool PluginManagerPrivate::loadPlugins()
 // Path&Folder handling
 //*****************************************************************************
 
+bool PluginManagerPrivate::saveSettings()
+{
+    QSettings settings;
+    settings.beginGroup("Plugins");
+    settings.setValue("pluginPath", _pluginFolders);
+    settings.endGroup();
+    return true;
+}
+
 bool PluginManagerPrivate::readPluginFoldersFromSettings()
 {
     QSettings settings;
     settings.beginGroup("Plugins");
-    QString path = settings.value("pluginPath").toString();
+    _pluginFolders = settings.value("pluginPath").toStringList();
+    settings.endGroup();
 
-    if (path.isEmpty()) {
+    if (_pluginFolders.isEmpty()) {
         // qDebug() << "pluginPath not yet set, initialize with default value \"plugins\"";
         // set the initial startup flag. TODO: check in register new plugin
         initalStartup = true;
 
+
         // if there is no path append the default path
-        if (!this->addPluginFolder("plugins")) {
+        QString defaultPluginPath = "./plugins";
+        QDir defaultPluginDir;
+        defaultPluginDir.setPath(QCoreApplication::applicationDirPath());
+
+        if(!defaultPluginDir.exists(defaultPluginPath) && !defaultPluginDir.mkdir(defaultPluginPath)){
             return false;
         }
-    } else {
-        _pluginFolders.append(path.split(";"));
+
+        if (!addPluginFolder(defaultPluginPath)) {
+            return false;
+        }
     }
 
-    settings.endGroup();
     return true;
 }
 
 bool PluginManagerPrivate::addPluginFolder(QString const&  folder)
 {
-    QSettings settings;
-    settings.beginGroup("Plugins");
-    QString currentPath = settings.value("pluginPath").toString();
-
-    if (currentPath.contains(folder)) {
-        _errorList.append(QString("Folder \"%1\" is already in path variable").arg(folder));
-        settings.endGroup();
+    if(_pluginFolders.contains(folder)){
         return false;
-    } else  {
-        if (QDir(folder).exists()) {
-            // append the new folder to internal list and serialize it to settings
-            _pluginFolders.append(folder);
-            _pluginFolders.removeDuplicates();
-            settings.setValue("pluginPath", _pluginFolders.join(";"));
-            settings.endGroup();
-            return true;
-        } else {
-            _errorList.append(QString("\"%1\" is not a valid directory").arg(folder));
-            settings.endGroup();
-            return false;
-        }
     }
+
+    _pluginFolders.append(folder);
+    return saveSettings();
 }
 
 bool PluginManagerPrivate::removePluginFolder(QString const&  folder)
 {
-    QSettings settings;
-    settings.beginGroup("Plugins");
-    QString currentPath = settings.value("pluginPath").toString();
-
-    if (currentPath.contains(folder)) {
-        // qDebug() << QString("remove \"%1\" from plugin path").arg(folder);
-        // remove folder from internal list and save new path to settings
-        _pluginFolders.removeAll(folder);
-        settings.setValue("pluginPath", _pluginFolders.join(";"));
-        settings.endGroup();
-        return true;
-    } else {
-        _errorList.append(QString("directory \"%1\" is not in plugin path").arg(folder));
-        settings.endGroup();
-        return false;
+    if(_pluginFolders.removeAll(folder)){
+        return saveSettings();
     }
+
+    return false;
 }
 
 
@@ -278,17 +267,12 @@ QStringList const& PluginManagerPrivate::pluginPath()
     return _pluginFolders;
 }
 
-void PluginManagerPrivate::setPluginPath(QString const& folderList)
+void PluginManagerPrivate::setPluginPath(QStringList const& folderList)
 {
     _pluginFolders.clear();
-    _pluginFolders.append(folderList.split(";"));
+    _pluginFolders.append(folderList);
     _pluginFolders.removeDuplicates();
-
-    QSettings settings;
-    settings.beginGroup("Plugins");
-    settings.setValue("pluginPath", folderList);
-    settings.endGroup();
-    // qDebug() << "Plugin path: " << _pluginFolders.join(";");
+    saveSettings();
 }
 
 //*****************************************************************************
@@ -359,6 +343,11 @@ bool PluginManagerPrivate::verifyPluginMetaData()
     foreach (QString directory, _pluginFolders) {
         //qDebug() <<  QString("scan \"%1\" for plugins..").arg(directory);
         QDir dir(directory);
+
+        if(dir.isRelative()){
+            dir.setPath(QCoreApplication::applicationDirPath());
+            dir.cd(directory);
+        }
 
         foreach (QString fileName, dir.entryList(QDir::Files)) {
             QString pluginPath = dir.absoluteFilePath(fileName);
@@ -495,7 +484,7 @@ QStringList const& PluginManager::pluginPath()
     return d->pluginPath();
 }
 
-void PluginManager::setPluginPath(QString const& directory)
+void PluginManager::setPluginPath(QStringList const& directory)
 {
     Q_D(PluginManager);
     return d->setPluginPath(directory);

@@ -41,7 +41,7 @@ public:
      * @brief setPluginPath adds a new directory path to the plugin path
      * @param directory, the path to be added
      */
-    void setPluginPath(const QString& directory);
+    void setPluginPath(const QStringList &directory);
 
     /**
      * @brief lastError returns the last error message of the plugin manager

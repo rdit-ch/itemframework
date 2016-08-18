@@ -20,7 +20,7 @@ public:
     bool loadPlugins();
     QString const& lastError();
     QStringList const& pluginPath();
-    void setPluginPath(const QString& folderList);
+    void setPluginPath(const QStringList &folderList);
     QList<PluginMetaData*> pluginMetaDataList();
 
     void addPluginComponent(QMetaObject derivedMeta, QMetaObject baseMeta);
@@ -36,7 +36,7 @@ private:
     bool readPluginFoldersFromSettings();
     bool verifyPluginMetaData();
     bool isPluginCompatible(QString const& pluginApiVersion);
-
+    bool saveSettings();
     static bool compareMetaObjects(const QMetaObject* m1, const QMetaObject* m2);
 
     QStringList _pluginFolders;

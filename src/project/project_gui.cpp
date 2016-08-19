@@ -389,7 +389,7 @@ void ProjectGui::showProjectChangedByExternalDialog()
         return;
     }
 
-    QString dialogText = tr("The project \"%1\" has changed outside RTV. Do you want to reload it?\n")
+    QString dialogText = tr("The project \"%1\" has changed outside Traviz. Do you want to reload it?\n")
                          .arg(_project->name());
     _domChanged = false;
     _projectChangedExternDialog->setText(dialogText);

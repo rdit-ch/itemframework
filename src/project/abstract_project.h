@@ -331,7 +331,7 @@ protected:
     void setVersion(const QString& version);
 
     /**
-     * @brief Set project changed by extern (e.g. project file was changed outside rtv).
+     * @brief Set project changed by extern (e.g. project file was changed outside Traviz).
      *
      * @param isExternChanged The project extern changed state.
      *

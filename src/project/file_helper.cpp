@@ -66,26 +66,6 @@ bool FileHelper::directoryIsWritable(const QString& directoryPath)
     return false;
 }
 
-bool FileHelper::testOpenFile(const QString& filePath, QIODevice::OpenMode openMode)
-{
-    QFile file(filePath);
-
-    if (!fileExists(filePath)) {
-        if (!file.open(openMode)) {
-            _lastError = QString("No Permission to open file %1 with openmode %2.").arg(filePath).arg(openMode);
-            return false;
-        }
-
-        file.close();
-    }  else {
-        if (!testFileOpenMode(filePath, openMode)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 bool FileHelper::testFileOpenMode(const QString& filePath, QIODevice::OpenMode openMode)
 {
     QFile file(filePath);

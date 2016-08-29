@@ -611,6 +611,7 @@ void FileWorkspaceGui::createProjectsFromImport(const QStringList &projectPaths,
         generalOverwrite = 1;
     }
 
+    QStringList importedProjectInfo;
     for(QString projectPath : projectPaths){
 
         int projectOverwrite = 1;
@@ -619,10 +620,22 @@ void FileWorkspaceGui::createProjectsFromImport(const QStringList &projectPaths,
         QFile dstProjectFile(QString("%1/%2").arg(fileWorkspace->path()).arg(srcProjectFileInfo.fileName()));
 
         if(srcProjectFile.fileName() == dstProjectFile.fileName()){
-            break;
+            // Project is in correct folder and can be added.
+            QDomDocument projectDomDocument = FileHelper::domDocumentFromXMLFile(srcProjectFile.fileName());
+            QSharedPointer<FileProject> fileProject = QSharedPointer<FileProject>(new FileProject(fileWorkspace->settingsScope(),
+                    srcProjectFile.fileName(),
+                    projectDomDocument));
+
+            if (fileWorkspace->addProject(fileProject)) {
+                addProjectGui(QSharedPointer<ProjectGui>(new ProjectGui(this, fileProject)));
+                importedProjectInfo.append(fileProject->fileName());
+            }
+            // Next project
+            continue;
         }
 
         if(dstProjectFile.exists() && generalOverwrite == -1){
+            // Show overwrite message box, if file exists and overwrite all was not set.
             QString message = tr("Overwrite \"%1\" in folder \"%2\" ?").arg(dstProjectFile.fileName()).arg(fileWorkspace->path());
             int ret = QMessageBox::information(0, tr("Overwrite File"),
                                            message,
@@ -648,13 +661,15 @@ void FileWorkspaceGui::createProjectsFromImport(const QStringList &projectPaths,
         if(generalOverwrite == 1 || projectOverwrite == 1){
             QDomDocument projectDomDocument = FileHelper::domDocumentFromXMLFile(srcProjectFile.fileName());
             if(dstProjectFile.exists()){
-                QSharedPointer<AbstractProject> project = fileWorkspace->project(dstProjectFile.fileName());
-                if(!project.isNull()){
-                    QSharedPointer<ProjectGui> projectGuiPtr = projectGui(project);
+                QSharedPointer<FileProject> fileProject = qSharedPointerCast<FileProject>(fileWorkspace->project(dstProjectFile.fileName()));
+                if(!fileProject.isNull()){
+                    // Project with the same name is alread present in workspace and will be overwritten.
+                    QSharedPointer<ProjectGui> projectGuiPtr = projectGui(fileProject);
                     if(!projectGuiPtr.isNull() && unloadProject(projectGuiPtr,false)){
-                        project->setDomDocument(projectDomDocument);
-                        project->save();
+                        fileProject->setDomDocument(projectDomDocument);
+                        fileProject->save();
                         loadProject(projectGuiPtr);
+                        importedProjectInfo.append(fileProject->fileName());
                         continue;
                     }
                 }
@@ -683,7 +698,24 @@ void FileWorkspaceGui::createProjectsFromImport(const QStringList &projectPaths,
 
             if (fileWorkspace->addProject(fileProject)) {
                 addProjectGui(QSharedPointer<ProjectGui>(new ProjectGui(this, fileProject)));
+                importedProjectInfo.append(fileProject->fileName());
             }
         }
     }
+
+    QString message;
+
+    if(importedProjectInfo.isEmpty()){
+        message = tr("No Projects are imported.");
+    } else {
+        message = tr("Number of imported Projects: %1\n").arg(importedProjectInfo.count());
+        for(QString projectInfo : importedProjectInfo){
+            message.append(tr("\n%1").arg(projectInfo));
+        }
+    }
+
+    QMessageBox::information(0, tr("Project import complete."),
+                                   message,
+                                   QMessageBox::Ok,
+                                   QMessageBox::Ok);
 }

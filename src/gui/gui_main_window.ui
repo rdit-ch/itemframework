@@ -117,7 +117,7 @@
   </action>
   <action name="newProject">
    <property name="icon">
-    <iconset theme="document-open" resource="../res/res_core.qrc">
+    <iconset theme="folder-new" resource="../res/res_core.qrc">
      <normaloff>:/core/folder-new-7.png</normaloff>:/core/folder-new-7.png</iconset>
    </property>
    <property name="text">
@@ -224,7 +224,7 @@
   </action>
   <action name="actionWorkspace">
    <property name="text">
-    <string>&amp;Switch Workspace...</string>
+    <string>Switch &amp;Workspace...</string>
    </property>
   </action>
  </widget>

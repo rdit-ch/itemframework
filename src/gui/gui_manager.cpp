@@ -12,56 +12,56 @@
 #include <QDesktopWidget>
 
 
-STARTUP_ADD_SINGLETON(Gui_Manager)
+STARTUP_ADD_SINGLETON(GuiManager)
 
 
-Gui_Manager::Gui_Manager()
+GuiManager::GuiManager()
 {
-    main_window        = new Gui_Main_Window();
-    main_window->installEventFilter(this);
+    _mainWindow        = new Gui_Main_Window();
+    _mainWindow->installEventFilter(this);
 
-    menu_view_list << "&View";
+    _menuViewList << "&View";
 
-    menubar = main_window->menuBar();
+    _menuBar = _mainWindow->menuBar();
 
-    main_window->setTabPosition(Qt::LeftDockWidgetArea, QTabWidget::West);
-    main_window->setTabPosition(Qt::RightDockWidgetArea, QTabWidget::East);
-    main_window->setTabPosition(Qt::TopDockWidgetArea, QTabWidget::North);
-    main_window->setTabPosition(Qt::BottomDockWidgetArea, QTabWidget::North);
+    _mainWindow->setTabPosition(Qt::LeftDockWidgetArea, QTabWidget::West);
+    _mainWindow->setTabPosition(Qt::RightDockWidgetArea, QTabWidget::East);
+    _mainWindow->setTabPosition(Qt::TopDockWidgetArea, QTabWidget::North);
+    _mainWindow->setTabPosition(Qt::BottomDockWidgetArea, QTabWidget::North);
 
-    include_In_Layout(new ConsoleWidget(ConsoleModel::instance()), Window_Layout::Bottom_Area);
+    includeInLayout(new ConsoleWidget(ConsoleModel::instance()), Window_Layout::Bottom_Area);
 
     // plugin manager
-    _uiPluginManager = new GuiPluginManager(main_window);
+    _uiPluginManager = new GuiPluginManager(_mainWindow);
 
 }
 
-Gui_Manager::~Gui_Manager()
+GuiManager::~GuiManager()
 {
     delete _uiPluginManager;
 }
 
-bool Gui_Manager::postInit()
+bool GuiManager::postInit()
 {
-    show_mainwindow();
-    main_window->setDisabled(true);
+    showMainWindow();
+    _mainWindow->setDisabled(true);
 
     if (!ProjectManagerGui::instance()->start()) {
-        main_window->close();
+        _mainWindow->close();
     }
 
-    main_window->setDisabled(false);
+    _mainWindow->setDisabled(false);
     return true;
 }
 
-bool Gui_Manager::preDestroy()
+bool GuiManager::preDestroy()
 {
     return true;
 }
 
-bool Gui_Manager::eventFilter(QObject* o, QEvent* e)
+bool GuiManager::eventFilter(QObject* o, QEvent* e)
 {
-    if (o == main_window && e->type() == QEvent::Close) {
+    if (o == _mainWindow && e->type() == QEvent::Close) {
         QCloseEvent* ce = (QCloseEvent*) e;
 
         // Go through all callbacks in callbacklist
@@ -76,16 +76,16 @@ bool Gui_Manager::eventFilter(QObject* o, QEvent* e)
         }
 
         // Close all registred windows
-        for (int i = 0; i < lis_close_window.count(); i++) {
+        for (int i = 0; i < _closeWindows.count(); i++) {
             // If (Q)Pointer is still valid (Window not deleted yet)
-            if (lis_close_window.at(i)) {
+            if (_closeWindows.at(i)) {
                 // Hide window (deletion should be handled by owner)
-                lis_close_window.at(i)->hide();
+                _closeWindows.at(i)->hide();
             }
         }
     }
 
-    if (o == main_window && e->type() == QEvent::ActivationChange) {
+    if (o == _mainWindow && e->type() == QEvent::ActivationChange) {
         emit mainWindowActivationChange();
     }
 
@@ -95,77 +95,77 @@ bool Gui_Manager::eventFilter(QObject* o, QEvent* e)
 
 
 
-void Gui_Manager::register_close_handler(std::function<bool()> callback)
+void GuiManager::registerCloseHandler(std::function<bool()> callback)
 {
     _closeApplicationCallbacks.append(callback);
 
 }
 
-QT_DEPRECATED void Gui_Manager::register_close_window(QMainWindow* window)
+QT_DEPRECATED void GuiManager::registerCloseWindow(QMainWindow* window)
 {
     //destroy the window in the destructor of the owner when possible!
-    lis_close_window.append(QPointer<QMainWindow>(window));
+    _closeWindows.append(QPointer<QMainWindow>(window));
 
 }
 
-bool Gui_Manager::mainWindowIsActive() const
+bool GuiManager::mainWindowIsActive() const
 {
-    return main_window->isActiveWindow();
+    return _mainWindow->isActiveWindow();
 }
 
 
-void Gui_Manager::include_In_Mainmenue(QStringList menu_item_list, QAction* menu_action)
+void GuiManager::includeInMainmenue(QStringList menuItemList, QAction* menuAction)
 {
-    if (menu_action == NULL || menu_item_list.isEmpty()) {
+    if (menuAction == NULL || menuItemList.isEmpty()) {
         return;
     }
 
-    QString root_menu = menu_item_list.takeFirst();
-    QMenu*  tmp_Menue = NULL;
+    QString rootMenu = menuItemList.takeFirst();
+    QMenu*  tmpMenue = NULL;
 
-    foreach (QAction* a, menubar->actions()) {
-        if (root_menu == a->text()) {
-            tmp_Menue = a->menu();
+    foreach (QAction* a, _menuBar->actions()) {
+        if (rootMenu == a->text()) {
+            tmpMenue = a->menu();
             break;
         }
     }
 
-    if (tmp_Menue == NULL) {
-        tmp_Menue = menubar->addMenu(root_menu);
+    if (tmpMenue == NULL) {
+        tmpMenue = _menuBar->addMenu(rootMenu);
     }
 
 
-    for (int i = 0; i < menu_item_list.size(); ++i) {
-        bool find_item = false;
-        QString text = menu_item_list.at(i);
+    for (int i = 0; i < menuItemList.size(); ++i) {
+        bool findItem = false;
+        QString text = menuItemList.at(i);
 
-        foreach (QAction* a, tmp_Menue->actions()) {
+        foreach (QAction* a, tmpMenue->actions()) {
             if (text == a->text()) {
-                find_item = true;
-                tmp_Menue = a->menu();
+                findItem = true;
+                tmpMenue = a->menu();
                 break;
             }
         }
 
-        if (!find_item) {
-            tmp_Menue = menubar->addMenu(text);
+        if (!findItem) {
+            tmpMenue = _menuBar->addMenu(text);
         }
     }
 
-    tmp_Menue->addAction(menu_action);
+    tmpMenue->addAction(menuAction);
 
 }
 
-QAction* Gui_Manager::get_action(QString name)
+QAction* GuiManager::action(QString name)
 {
-    foreach (QAction* a, menubar->actions()) {
+    foreach (QAction* a, _menuBar->actions()) {
         QMenu* submenu = a->menu();
 
         if (submenu == NULL) {
             continue;
         }
 
-        QAction* sub = get_action(submenu, name);
+        QAction* sub = action(submenu, name);
 
         if (sub != NULL) {
             return sub;
@@ -175,7 +175,7 @@ QAction* Gui_Manager::get_action(QString name)
     return NULL;
 }
 
-QAction* Gui_Manager::get_action(QMenu* parent, QString name)
+QAction* GuiManager::action(QMenu* parent, QString name)
 {
     foreach (QAction* a, parent->actions()) {
         if (a->text().replace("&", "") == name) {
@@ -188,7 +188,7 @@ QAction* Gui_Manager::get_action(QMenu* parent, QString name)
             continue;
         }
 
-        QAction* sub = get_action(submenu, name);
+        QAction* sub = action(submenu, name);
 
         if (sub != NULL) {
             return sub;
@@ -199,33 +199,33 @@ QAction* Gui_Manager::get_action(QMenu* parent, QString name)
 }
 
 
-void Gui_Manager::include_In_Layout(QDockWidget* widget, Window_Layout::Area area)
+void GuiManager::includeInLayout(QDockWidget* widget, Window_Layout::Area area)
 {
     widget->setWindowTitle(widget->windowTitle());
-    include_In_Mainmenue(menu_view_list, widget->toggleViewAction());
+    includeInMainmenue(_menuViewList, widget->toggleViewAction());
 
 
     switch (area) {
     case Window_Layout::Left_Area:
-        main_window->addDockWidget(Qt::LeftDockWidgetArea, widget);
+        _mainWindow->addDockWidget(Qt::LeftDockWidgetArea, widget);
         break;
 
     case Window_Layout::Right_Area:
-        main_window->addDockWidget(Qt::RightDockWidgetArea, widget);
+        _mainWindow->addDockWidget(Qt::RightDockWidgetArea, widget);
         break;
 
     case Window_Layout::Bottom_Area:
-        main_window->addDockWidget(Qt::BottomDockWidgetArea, widget);
+        _mainWindow->addDockWidget(Qt::BottomDockWidgetArea, widget);
         break;
 
     }
 }
 
-bool Gui_Manager::removeFromLayout(QDockWidget* dockWidget)
+bool GuiManager::removeFromLayout(QDockWidget* dockWidget)
 {
-    for (QDockWidget* dw : main_window->findChildren<QDockWidget*>()) {
+    for (QDockWidget* dw : _mainWindow->findChildren<QDockWidget*>()) {
         if (dw == dockWidget) {
-            main_window->removeDockWidget(dockWidget);
+            _mainWindow->removeDockWidget(dockWidget);
             return true;
         }
     }
@@ -234,44 +234,44 @@ bool Gui_Manager::removeFromLayout(QDockWidget* dockWidget)
 }
 
 
-void Gui_Manager::set_central_widget(QWidget* w)
+void GuiManager::setCentralWidget(QWidget* w)
 {
-    main_window->setCentralWidget(w);
+    _mainWindow->setCentralWidget(w);
 
 }
-void Gui_Manager::show_mainwindow()
+void GuiManager::showMainWindow()
 {
-    main_window->setGeometry(QStyle::alignedRect(
+    _mainWindow->setGeometry(QStyle::alignedRect(
                                  Qt::LeftToRight,
                                  Qt::AlignCenter,
-                                 main_window->size(),
+                                 _mainWindow->size(),
                                  qApp->desktop()->availableGeometry()));
-    main_window->showMaximized();
+    _mainWindow->showMaximized();
 }
 
 
-QWidget* Gui_Manager::get_widget_reference()
+QWidget* GuiManager::widgetReference()
 {
-    return main_window;
+    return _mainWindow;
 }
 
-void Gui_Manager::show_widget(QWidget* widget)
+void GuiManager::showWidget(QWidget* widget)
 {
     widget->show();
 }
 
-void Gui_Manager::show_widget(QWidget* widget, QPoint position)
+void GuiManager::showWidget(QWidget* widget, QPoint position)
 {
     widget->move(position);
     widget->show();
 }
 
-void Gui_Manager::show_dialog_modal(QDialog* dialog)
+void GuiManager::showDialogModal(QDialog* dialog)
 {
     dialog->exec();
 }
 
-void Gui_Manager::show_dialog_modal(QDialog* dialog, QPoint widget_position)
+void GuiManager::showDialogModal(QDialog* dialog, QPoint widget_position)
 {
     dialog->move(widget_position);
     dialog->exec();

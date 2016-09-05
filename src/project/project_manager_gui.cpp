@@ -79,14 +79,14 @@ bool ProjectManagerGui::preDestroy()
 void ProjectManagerGui::setMainGuiElements()
 {
     // Set project manager main gui elements.
-    Gui_Manager::instance()->include_In_Layout(_projectListDockWidget, Window_Layout::Left_Area);
-    Gui_Manager::instance()->set_central_widget(_itemViewTabWidget);
+    GuiManager::instance()->includeInLayout(_projectListDockWidget, Window_Layout::Left_Area);
+    GuiManager::instance()->setCentralWidget(_itemViewTabWidget);
 
     // Connect close application menu entry.
-    Gui_Manager::instance()->register_close_handler(std::bind(&ProjectManagerGui::closeWorkspace,this));
+    GuiManager::instance()->registerCloseHandler(std::bind(&ProjectManagerGui::closeWorkspace,this));
 
     // Connect show workspace manager menu entry.
-    QAction* actionWorkspaceManager = Gui_Manager::instance()->get_action("Workspace Manager...");
+    QAction* actionWorkspaceManager = GuiManager::instance()->action("Workspace Manager...");
     connect(actionWorkspaceManager, &QAction::triggered, this, &ProjectManagerGui::openWorkspaceManager);
 }
 
@@ -108,7 +108,7 @@ AbstractWorkspaceGui* ProjectManagerGui::abstractWorkspaceGuiClass(
 void ProjectManagerGui::updateMenuEntries()
 {
     // Get main menu entry "Workspaces".
-    QAction* actionWorkspaces = Gui_Manager::instance()->get_action("Switch Workspace...");
+    QAction* actionWorkspaces = GuiManager::instance()->action("Switch Workspace...");
     const QSharedPointer<AbstractWorkspace> currentWorkspace = _projectManager->currentWorkspace();
     _menuWorkspaces->clear();
     _menuWorkspaces->setTitle(actionWorkspaces->text());

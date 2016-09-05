@@ -12,7 +12,7 @@ GuiPluginManager::GuiPluginManager(QWidget* parent) :
 {
     _ui->setupUi(this);
     // show ui on action
-    QAction* showPluginManager = Gui_Manager::instance()->get_action("Plugins");
+    QAction* showPluginManager = GuiManager::instance()->action("Plugins");
     connect(showPluginManager, &QAction::triggered, this, &QDialog::exec);
 
     // create table and connections

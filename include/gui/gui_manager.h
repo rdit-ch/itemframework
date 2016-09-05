@@ -18,7 +18,7 @@ enum Area {
 };
 }
 
-class CORE_EXPORT Gui_Manager : public QObject, public Singleton<Gui_Manager>
+class CORE_EXPORT GuiManager : public QObject, public Singleton<GuiManager>
 {
     //------------------Singleton Stuff---------------------------
     Q_OBJECT
@@ -27,8 +27,8 @@ class CORE_EXPORT Gui_Manager : public QObject, public Singleton<Gui_Manager>
     Q_CLASSINFO("dependsOn", "PluginManager")
 
 public:
-    Q_INVOKABLE Gui_Manager();
-    ~Gui_Manager();
+    Q_INVOKABLE GuiManager();
+    ~GuiManager();
 
 protected:
     bool postInit();
@@ -38,33 +38,33 @@ protected:
 public:
 
     bool removeFromLayout(QDockWidget* dockWidget);
-    void        include_In_Layout(QDockWidget*, Window_Layout::Area);
-    void        include_In_Mainmenue(QStringList, QAction*);
-    void        set_central_widget(QWidget* w);
-    void        show_mainwindow();
-    void        show_widget(QWidget* widget);
-    void        show_widget(QWidget* widget, QPoint position);
-    void        show_dialog_modal(QDialog* dialog);
-    void        show_dialog_modal(QDialog* dialog, QPoint position);
-    QWidget*    get_widget_reference();
-    QAction*    get_action(QString name);
+    void        includeInLayout(QDockWidget*, Window_Layout::Area);
+    void        includeInMainmenue(QStringList, QAction*);
+    void        setCentralWidget(QWidget* w);
+    void        showMainWindow();
+    void        showWidget(QWidget* widget);
+    void        showWidget(QWidget* widget, QPoint position);
+    void        showDialogModal(QDialog* dialog);
+    void        showDialogModal(QDialog* dialog, QPoint position);
+    QWidget*    widgetReference();
+    QAction*    action(QString name);
     /**
      * @brief This callback will be executed by an application close event.
      * If the callback returns true the close process will be continue -> shutdown application.
      * If the callback returns false the close process will be interrupted.
      * @param std::function<bool> callback
      */
-    void        register_close_handler(std::function<bool()> callback);
-    void        register_close_window(QMainWindow* window);
+    void        registerCloseHandler(std::function<bool()> callback);
+    void        registerCloseWindow(QMainWindow* window);
     bool mainWindowIsActive() const;
 private:
 
-    QMainWindow*                main_window;
-    QMenuBar*                    menubar;
-    QStringList                 menu_view_list;
+    QMainWindow*                _mainWindow;
+    QMenuBar*                    _menuBar;
+    QStringList                 _menuViewList;
     QList<std::function<bool()>>  _closeApplicationCallbacks;
-    QList<QPointer<QMainWindow>>  lis_close_window;
-    QAction* get_action(QMenu* parent, QString name);
+    QList<QPointer<QMainWindow>>  _closeWindows;
+    QAction* action(QMenu* parent, QString name);
     class GuiPluginManager* _uiPluginManager;
 
 

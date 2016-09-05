@@ -37,7 +37,7 @@ void AbstractWorkspaceGui::unsetGuiElements()
 {
     disconnect(_itemViewTabWidget, 0, this, 0);
     disconnect(_projectListDockWidget, 0, this, 0);
-    disconnect(Gui_Manager::instance(), 0, this, 0);
+    disconnect(GuiManager::instance(), 0, this, 0);
 }
 
 QSharedPointer<AbstractWorkspace> AbstractWorkspaceGui::workspace() const

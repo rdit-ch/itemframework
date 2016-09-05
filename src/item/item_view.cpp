@@ -47,7 +47,7 @@ ItemScene* ItemView::itemScene()
 
 bool ItemView::load(class QDomElement& domElement)
 {
-    Gui_Progress_Dialog prog_dial(Gui_Manager::instance()->get_widget_reference());
+    Gui_Progress_Dialog prog_dial(GuiManager::instance()->widgetReference());
     connect(_scene, SIGNAL(loadingProgress(int, QString, QString)), &prog_dial, SLOT(progress(int, QString, QString)));
     return _scene->loadFromXml(domElement);
 }

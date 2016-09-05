@@ -22,7 +22,7 @@ ProjectGui::ProjectGui(AbstractWorkspaceGui* parent, QSharedPointer<AbstractProj
     _project = project;
     _projectGuiLabel = _project->name();
     _projectName = _project->name();
-    connect(Gui_Manager::instance(), &Gui_Manager::mainWindowActivationChange, this, &ProjectGui::onMainWindowActivationChanged);
+    connect(GuiManager::instance(), &GuiManager::mainWindowActivationChange, this, &ProjectGui::onMainWindowActivationChanged);
     connect(_project.data(), &AbstractProject::stateChange, this, &ProjectGui::onStateChanged);
     connect(_project.data(), &AbstractProject::externDomChange, this, &ProjectGui::onExternDomChanged);
     connect(_project.data(), &AbstractProject::internDomChanged, this, &ProjectGui::reloadDomDocument);
@@ -342,7 +342,7 @@ void ProjectGui::onSearchProject()
 
 void ProjectGui::onExternDomChanged()
 {
-    if (Gui_Manager::instance()->mainWindowIsActive()) {
+    if (GuiManager::instance()->mainWindowIsActive()) {
         showProjectChangedByExternalDialog();
         return;
     }
@@ -352,7 +352,7 @@ void ProjectGui::onExternDomChanged()
 
 void ProjectGui::onMainWindowActivationChanged()
 {
-    if (Gui_Manager::instance()->mainWindowIsActive() && _domChanged) {
+    if (GuiManager::instance()->mainWindowIsActive() && _domChanged) {
         showProjectChangedByExternalDialog();
     }
 }

@@ -15,11 +15,11 @@
 FileWorkspaceGui::FileWorkspaceGui()
 {
     // Create a new Project Action
-    QAction* newProject = Gui_Manager::instance()->get_action("New Project");
+    QAction* newProject = GuiManager::instance()->action("New Project");
     // Open an existing Project Action
-    QAction* openProject = Gui_Manager::instance()->get_action("Open Project");
-    QAction* saveProject = Gui_Manager::instance()->get_action("Save Project");
-    QAction* saveAllProjects = Gui_Manager::instance()->get_action("Save all Projects ...");
+    QAction* openProject = GuiManager::instance()->action("Open Project");
+    QAction* saveProject = GuiManager::instance()->action("Save Project");
+    QAction* saveAllProjects = GuiManager::instance()->action("Save all Projects ...");
     // Connect actions
     connect(newProject, &QAction::triggered, this, &FileWorkspaceGui::showNewProjectDialog);
     connect(openProject, &QAction::triggered, this, &FileWorkspaceGui::showOpenProjectDialog);

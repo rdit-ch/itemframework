@@ -31,12 +31,12 @@ void Item_Manager::registerItemToolbox()
         delete item;
     }
 
-    Gui_Manager::instance()->include_In_Layout(toolbox, Window_Layout::Left_Area);
+    GuiManager::instance()->includeInLayout(toolbox, Window_Layout::Left_Area);
 }
 
 void Item_Manager::registerItemTemplatesWidget()
 {
-    Gui_Manager::instance()->include_In_Layout(_itemTemplatesWidget.data(), Window_Layout::Left_Area);
+    GuiManager::instance()->includeInLayout(_itemTemplatesWidget.data(), Window_Layout::Left_Area);
 }
 
 QSharedPointer<ItemTemplatesWidget> Item_Manager::itemTemplatesWidget()

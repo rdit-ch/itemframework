@@ -11,8 +11,8 @@ STARTUP_ADD_SINGLETON(Livedoc)
 
 Livedoc::Livedoc()
 {
-    browser = new Livedoc_Widget(Gui_Manager::instance()->get_widget_reference());
-    connect(Gui_Manager::instance()->get_action("LiveDoc"), SIGNAL(triggered(bool)), this, SLOT(toggle(bool)));
+    browser = new Livedoc_Widget(GuiManager::instance()->widgetReference());
+    connect(GuiManager::instance()->action("LiveDoc"), SIGNAL(triggered(bool)), this, SLOT(toggle(bool)));
     connect(browser, SIGNAL(signal_close()), this, SLOT(widget_closed()));
 
     add_provider(new Livedoc_Home_Provider());
@@ -43,7 +43,7 @@ bool Livedoc::preDestroy()
 
 void Livedoc::widget_closed()
 {
-    Gui_Manager::instance()->get_action("LiveDoc")->setChecked(false);
+    GuiManager::instance()->action("LiveDoc")->setChecked(false);
 }
 
 const QList<Interface_Livedoc_Provider*>& Livedoc::get_providers() const

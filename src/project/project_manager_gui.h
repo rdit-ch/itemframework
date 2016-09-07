@@ -16,7 +16,7 @@ class ProjectManagerGui : public QObject, public Singleton<ProjectManagerGui>
     Q_INTERFACES(AbstractSingleton)
     Q_CLASSINFO("guiModule", "true")
     Q_CLASSINFO("dependsOn", "PluginManager")
-    Q_CLASSINFO("dependsOn", "Gui_Manager")
+    Q_CLASSINFO("dependsOn", "GuiManager")
 
 public:
     Q_INVOKABLE ProjectManagerGui();

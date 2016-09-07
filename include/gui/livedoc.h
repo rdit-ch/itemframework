@@ -17,7 +17,7 @@ class CORE_EXPORT Livedoc : public QObject, public Singleton<Livedoc>
     Q_INTERFACES(AbstractSingleton)
 
     Q_CLASSINFO("guiModule", "true")
-    Q_CLASSINFO("dependsOn", "Gui_Manager")
+    Q_CLASSINFO("dependsOn", "GuiManager")
     Q_CLASSINFO("dependsOn", "PluginManager")
 
 public:

@@ -33,7 +33,7 @@ class CORE_EXPORT Project_Manager : public QObject, public Singleton<Project_Man
     Q_INTERFACES(AbstractSingleton)
 
     Q_CLASSINFO("guiModule", "true")
-    Q_CLASSINFO("dependsOn", "Gui_Manager")
+    Q_CLASSINFO("dependsOn", "GuiManager")
 
 public:
     Q_INVOKABLE Project_Manager();

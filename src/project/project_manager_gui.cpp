@@ -79,8 +79,8 @@ bool ProjectManagerGui::preDestroy()
 void ProjectManagerGui::setMainGuiElements()
 {
     // Set project manager main gui elements.
-    GuiManager::instance()->includeInLayout(_projectListDockWidget, Window_Layout::Left_Area);
-    GuiManager::instance()->setCentralWidget(_itemViewTabWidget);
+    GuiManager::instance()->addWidget(_projectListDockWidget,WidgetName::Projects,WidgetArea::Left, WidgetType::DockWidget);
+    GuiManager::instance()->addWidget(_itemViewTabWidget,WidgetName::CentralWidget,WidgetArea::NoArea,WidgetType::CentralWidget);
 
     // Connect close application menu entry.
     GuiManager::instance()->registerCloseHandler(std::bind(&ProjectManagerGui::closeWorkspace,this));

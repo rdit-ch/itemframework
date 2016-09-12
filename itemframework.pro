@@ -223,7 +223,7 @@ OBJECTS_DIR  =  $$PWD/obj/
 MOC_DIR      =  $$PWD/moc/
 
 # Set build destination folder for manager libary
-PROJ_DIR = $$PWD/../
+PROJ_DIR = $$PWD
 # Linux:
 unix:CONFIG(debug, debug|release):          DESTDIR = $$PROJ_DIR/build/linux/debug/
 else:unix:CONFIG(release, debug|release):   DESTDIR = $$PROJ_DIR/build/linux/release/

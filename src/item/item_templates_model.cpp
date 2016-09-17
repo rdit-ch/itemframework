@@ -99,7 +99,10 @@ void ItemTemplatesModel::loadTemplates(TemplatesContainer const& templates)
 
         ItemScene scene{{}};
         auto pixmap = scene.createPixmap(templateDocument);
-
+        if (pixmap.isNull()) {
+            qDebug() << "pixmap for template " << templateName << " is null";
+            return;
+        }
         item->setData(templ.second.toByteArray(), Qt::UserRole);
         item->setData(pixmap, Qt::UserRole + 1);
 

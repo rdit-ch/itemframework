@@ -264,6 +264,10 @@ void ItemScene::paste()
 
 QRectF ItemScene::calculateBoundingBox(QList<QGraphicsItem const*> items, bool ignoreConnectors) const
 {
+    if (items.size() == 0) {
+        qDebug() << "Error while calculating bounding box of empty list";
+        return {};
+    }
     QList<QGraphicsItem const*> items_without_connectors{};
     QRectF boundingBox = items.first()->boundingRect().translated(items.first()->pos());
 
@@ -362,7 +366,14 @@ void ItemScene::copy(QList<QGraphicsItem*> itms) const
 QPixmap ItemScene::createPixmap(QDomDocument const& itemsDocument)
 {
     auto items = readItems(itemsDocument);
+    if (items.size() == 0) {
+        return {};
+    }
+
     auto bounding = calculateBoundingBox(constList(items));
+    if (bounding.isNull()) {
+        return {};
+    }
 
     return createPixmap(items, bounding);
 }

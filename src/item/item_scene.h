@@ -122,6 +122,8 @@ private:
     bool startConnection(QGraphicsSceneMouseEvent* mouseEvent);
     qreal distance(const QPointF& a, const QPointF& b) const;
 
+    void paintItem(QGraphicsItem* item, QPainter& painter, QStyleOptionGraphicsItem& options) const;
+
     QRectF calculateBoundingBox(QList<QGraphicsItem const*> items, bool ignoreConnectors = false) const;
     QList<QGraphicsItem*> readItems(QDomDocument const& document);
     QList<QGraphicsItem*> readItems(class QMimeData const& mimeData, char const* const mimeType, char const* const docType);

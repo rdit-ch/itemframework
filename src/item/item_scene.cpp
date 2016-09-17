@@ -383,31 +383,41 @@ QPixmap ItemScene::createPixmap(QList<QGraphicsItem*> items, QRectF const& bound
     QPixmap pixmap{bounding.size().toSize()};
     pixmap.fill(Qt::lightGray);
 
-    QPainter p{&pixmap};
-    p.setRenderHint(QPainter::Antialiasing);
-    p.translate(-bounding.topLeft());
+    QPainter painter{&pixmap};
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(-bounding.topLeft());
 
-    QStyleOptionGraphicsItem opt;
+    QStyleOptionGraphicsItem options;
 
     for (auto item : items) {
-        p.save();
-        p.translate(item->pos());
-
-        item->setSelected(false);
-        item->paint(&p, &opt);
-
-        for (auto child : item->childItems()) {
-            p.save();
-            p.translate(child->pos());
-            child->paint(&p, &opt);
-            p.restore();
-        }
-
-        item->setSelected(true);
-        p.restore();
+        paintItem(item, painter, options);
     }
 
     return pixmap;
+}
+
+void ItemScene::paintItem(QGraphicsItem* item, QPainter& painter, QStyleOptionGraphicsItem& options) const
+{
+    if (item == nullptr) {
+        qDebug() << "item to paint is null";
+        return;
+    }
+
+    painter.save();
+    painter.translate(item->pos());
+
+    item->setSelected(false);
+    item->paint(&painter, &options);
+
+    for (auto child : item->childItems()) {
+        painter.save();
+        painter.translate(child->pos());
+        child->paint(&painter, &options);
+        painter.restore();
+    }
+
+    item->setSelected(true);
+    painter.restore();
 }
 
 void ItemScene::createTemplate()

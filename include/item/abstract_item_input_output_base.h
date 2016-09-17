@@ -9,7 +9,7 @@
  * @brief The AbstractItemInputOutputBase class provides common functionality for the
  * ItemInput and ItemOutput classes.
  */
-class CORE_EXPORT AbstractItemInputOutputBase : public QGraphicsObject
+class ITEMFRAMEWORK_EXPORT AbstractItemInputOutputBase : public QGraphicsObject
 {
     Q_OBJECT
 

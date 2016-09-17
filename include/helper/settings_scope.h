@@ -18,7 +18,7 @@
  * A SettingsScope is identified by its name() and can have a parent SettingsScope. If a setting
  * value is requested and cannot be found in this SettingScope, the parent is consulted.
  */
-class CORE_EXPORT SettingsScope : public QObject
+class ITEMFRAMEWORK_EXPORT SettingsScope : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString name READ name WRITE setName)

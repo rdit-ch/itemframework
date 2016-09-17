@@ -11,7 +11,7 @@ class PluginMetaData;
 /**
  * @brief The PluginManager class
  */
-class CORE_EXPORT PluginManager : public QObject, public Singleton<PluginManager>
+class ITEMFRAMEWORK_EXPORT PluginManager : public QObject, public Singleton<PluginManager>
 {
 
     //*****************************************************************************

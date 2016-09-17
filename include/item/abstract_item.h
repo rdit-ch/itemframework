@@ -66,7 +66,7 @@ class SettingsScope;
  * \sa connectorStyle
  * \sa registerConnectorStyle
  */
-class CORE_EXPORT AbstractItem : public QGraphicsObject
+class ITEMFRAMEWORK_EXPORT AbstractItem : public QGraphicsObject
 {
     Q_OBJECT
     Q_PROPERTY(SettingsScope* settingsScope READ settingsScope)

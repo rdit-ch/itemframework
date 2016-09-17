@@ -18,7 +18,7 @@
  *
  * \see AbstractItem
  */
-class CORE_EXPORT AbstractWindowItem : public AbstractItem
+class ITEMFRAMEWORK_EXPORT AbstractWindowItem : public AbstractItem
 {
     Q_OBJECT
 

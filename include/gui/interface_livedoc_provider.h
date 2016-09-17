@@ -8,7 +8,7 @@
 #include <QObject>
 #include <QMap>
 
-class CORE_EXPORT Interface_Livedoc_Provider : public QObject
+class ITEMFRAMEWORK_EXPORT Interface_Livedoc_Provider : public QObject
 {
     Q_GADGET
 public:

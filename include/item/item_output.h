@@ -25,7 +25,7 @@ class ItemOutputPrivate;
  * \sa ItemInput
  * \sa ItemInputOutputBase
  */
-class CORE_EXPORT ItemOutput : public AbstractItemInputOutputBase
+class ITEMFRAMEWORK_EXPORT ItemOutput : public AbstractItemInputOutputBase
 {
     Q_OBJECT
 

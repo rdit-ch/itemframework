@@ -26,7 +26,7 @@
 class AbstractProject;
 class Project_Handler_Window;
 
-class CORE_EXPORT Project_Manager : public QObject, public Singleton<Project_Manager>
+class ITEMFRAMEWORK_EXPORT Project_Manager : public QObject, public Singleton<Project_Manager>
 {
     //------------------Singleton Stuff---------------------------
     Q_OBJECT

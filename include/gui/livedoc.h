@@ -10,7 +10,7 @@
 
 class Interface_Livedoc_Provider;
 class Livedoc_Widget;
-class CORE_EXPORT Livedoc : public QObject, public Singleton<Livedoc>
+class ITEMFRAMEWORK_EXPORT Livedoc : public QObject, public Singleton<Livedoc>
 {
     //------------------Singleton Stuff---------------------------
     Q_OBJECT

@@ -48,7 +48,7 @@ enum class WidgetArea {
 /**
  * @brief The GuiManager class handels widgets on the main window and
  */
-class CORE_EXPORT GuiManager : public QObject, public Singleton<GuiManager>
+class ITEMFRAMEWORK_EXPORT GuiManager : public QObject, public Singleton<GuiManager>
 {
     //------------------Singleton Stuff---------------------------
     Q_OBJECT

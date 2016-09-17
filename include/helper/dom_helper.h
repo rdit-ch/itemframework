@@ -15,7 +15,7 @@
  *
  * At the moment it helps you with storing and retrieving QVariant data and QObject properties.
  */
-class CORE_EXPORT DomHelper
+class ITEMFRAMEWORK_EXPORT DomHelper
 {
 public:
     // Global Tag definitions

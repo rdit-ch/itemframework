@@ -9,7 +9,7 @@
 /**
  * @brief The plugin factory interface. You need to have one factory per plugin container.
  */
-class CORE_EXPORT InterfaceFactory : public QObject
+class ITEMFRAMEWORK_EXPORT InterfaceFactory : public QObject
 {
     Q_OBJECT
 public:

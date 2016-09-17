@@ -9,7 +9,7 @@
  * @brief The AbstractSingleton class defines functions that every singleton must implement
  * Every Singleton must provide a constructor, destructor a postInit() and a preDestroy() method
  */
-class CORE_EXPORT AbstractSingleton
+class ITEMFRAMEWORK_EXPORT AbstractSingleton
 {
     Q_GADGET //Needed in order to use qobject_cast / interfaces stuff
 public:
@@ -35,7 +35,7 @@ Q_DECLARE_INTERFACE(AbstractSingleton, "Itemframework.Interface.Singleton/1.0")
 /**
  * @brief The SingletonStorage class is a helper to provide a unique, once-per-application, shared-across-all-plugins, hashmap to save Singletons into.
  */
-class CORE_EXPORT SingletonStorage
+class ITEMFRAMEWORK_EXPORT SingletonStorage
 {
     //Why do we need this class, and can't we just add a static data member of Type T* to the Singleton<T> class?
     // Well, the static member would need to be defined and initialized in a separate cpp file. This is not possible for template classes.
@@ -51,7 +51,7 @@ protected:
  * It provides a instance() functions which returns the only instance.
  * Template parameter T: Class that you implement (Curiously recurring template pattern)
  */
-template<typename T> class CORE_EXPORT Singleton : public AbstractSingleton, private SingletonStorage
+template<typename T> class ITEMFRAMEWORK_EXPORT Singleton : public AbstractSingleton, private SingletonStorage
 {
 public:
     Singleton()   //Should only be called from ObjectState Class

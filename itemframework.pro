@@ -4,12 +4,12 @@ CONFIG      +=  c++11
 TEMPLATE    =   lib
 VERSION     +=  0.1
 DEFINES     +=  API_VERSION=\\\"$$VERSION\\\" #Version of the Public api (equal to lib version^^)
-DEFINES     +=  CORE_BUILD=1 #used for CORE_EXPORT macro switch in appcore.h
+DEFINES     +=  CORE_BUILD=1 #used for ITEMFRAMEWORK_EXPORT macro switch in appcore.h
 
 SOURCE_VERSION = $$system(git describe --always --tags) #Source Code version
 DEFINES     += SOURCE_VERSION=\\\"$$SOURCE_VERSION\\\"
 
-QMAKE_CXXFLAGS +=  -fvisibility=hidden  #to enforce usage of CORE_EXPORT
+QMAKE_CXXFLAGS +=  -fvisibility=hidden  #to enforce usage of ITEMFRAMEWORK_EXPORT
 
 SOURCES     +=  \
                 src/appcore.cpp \

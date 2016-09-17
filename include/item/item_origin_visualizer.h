@@ -22,7 +22,7 @@ class GraphicsItemOriginVisualizer;
  *
  * An ItemOriginVisualizer is commonly used as a component of custom items widget.
  */
-class CORE_EXPORT ItemOriginVisualizer : public QWidget
+class ITEMFRAMEWORK_EXPORT ItemOriginVisualizer : public QWidget
 {
     Q_OBJECT
 

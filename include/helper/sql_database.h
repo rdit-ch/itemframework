@@ -15,7 +15,7 @@
  * \sa SqlQuery
  */
 
-class CORE_EXPORT SqlDatabase : private QSqlDatabase
+class ITEMFRAMEWORK_EXPORT SqlDatabase : private QSqlDatabase
 {
     friend class SqlQuery;
 public:
@@ -80,7 +80,7 @@ public:
  * - Has a database() method to get the database back
  * \sa SqlDatabase
  */
-class CORE_EXPORT SqlQuery: public QSqlQuery
+class ITEMFRAMEWORK_EXPORT SqlQuery: public QSqlQuery
 {
     friend class TestSqlDatabase;
 public:

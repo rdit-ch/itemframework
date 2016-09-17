@@ -16,7 +16,7 @@ class StartupHelperPrivate;
  * @brief The StartupHelper class manages dependencies between global singletons and other components.
  * It ensures that the singletons/components are constructed/deleted in the right order.
  */
-class CORE_EXPORT StartupHelper
+class ITEMFRAMEWORK_EXPORT StartupHelper
 {
 public:
     /**

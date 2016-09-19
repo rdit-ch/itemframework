@@ -9,6 +9,12 @@ Gui_Main_Window::Gui_Main_Window(QWidget* parent) :
     ui(new Ui::Gui_Main_Window)
 {
     ui->setupUi(this);
+
+}
+
+QToolBar *Gui_Main_Window::toolBar()
+{
+    return ui->toolBar;
 }
 
 Gui_Main_Window::~Gui_Main_Window()

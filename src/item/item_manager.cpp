@@ -31,12 +31,12 @@ void Item_Manager::registerItemToolbox()
         delete item;
     }
 
-    GuiManager::instance()->addWidget(toolbox, WidgetName::Toolbox, WidgetArea::Left, WidgetType::DockWidget);
+    GuiManager::instance()->addWidget(toolbox, "Toolbox", WidgetArea::Left, WidgetType::DockWidget);
 }
 
 void Item_Manager::registerItemTemplatesWidget()
 {
-    GuiManager::instance()->addWidget(_itemTemplatesWidget.data(), WidgetName::Templates, WidgetArea::Right, WidgetType::DockWidget);
+    GuiManager::instance()->addWidget(_itemTemplatesWidget.data(), "Templates", WidgetArea::Right, WidgetType::DockWidget);
 }
 
 QSharedPointer<ItemTemplatesWidget> Item_Manager::itemTemplatesWidget()

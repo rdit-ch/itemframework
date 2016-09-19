@@ -14,6 +14,8 @@ class Gui_Main_Window : public QMainWindow
 
 public:
     explicit Gui_Main_Window(QWidget* parent = 0);
+    QToolBar* toolBar();
+    QMenuBar* menuBar();
     ~Gui_Main_Window();
 
 private slots:

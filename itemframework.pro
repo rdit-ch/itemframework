@@ -149,7 +149,8 @@ HEADERS     +=  \
                 src/project/wizard_page_workspace_import_type.h \
                 src/project/wizard_page_file_system_project_import.h \
                 src/project/export_import_helper.h \
-                src/project/wizard_page_config.h
+                src/project/wizard_page_config.h \
+    src/gui/gui_manager_p.h
 
 
 

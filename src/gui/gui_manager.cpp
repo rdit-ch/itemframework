@@ -5,6 +5,7 @@
 #include "error/console_model.h"
 #include "project/project_manager_gui.h"
 #include "gui/gui_plugin_manager.h"
+#include "gui_manager_p.h"
 #include <QMenu>
 #include <QAction>
 #include <QMenuBar>
@@ -17,73 +18,80 @@
 
 STARTUP_ADD_SINGLETON(GuiManager)
 
-
-GuiManager::GuiManager()
+GuiManager::GuiManager(): d_ptr(new GuiManagerPrivate(this))
 {
-    _mainWindow = new Gui_Main_Window();
-    _mainWindow->installEventFilter(this);
+    Q_D(GuiManager);
+    d->_mainWindow = new Gui_Main_Window();
+    d->_mainWindow->installEventFilter(this);
 
-    _menuViewList << "&View";
+    d->_menuViewList << "&View";
 
-    _menuBar = _mainWindow->menuBar();
+    d->_menuBar = d->_mainWindow->menuBar();
 
-    _mainWindow->setTabPosition(Qt::LeftDockWidgetArea, QTabWidget::West);
-    _mainWindow->setTabPosition(Qt::RightDockWidgetArea, QTabWidget::East);
-    _mainWindow->setTabPosition(Qt::TopDockWidgetArea, QTabWidget::North);
-    _mainWindow->setTabPosition(Qt::BottomDockWidgetArea, QTabWidget::North);
+    d->_mainWindow->setTabPosition(Qt::LeftDockWidgetArea, QTabWidget::West);
+    d->_mainWindow->setTabPosition(Qt::RightDockWidgetArea, QTabWidget::East);
+    d->_mainWindow->setTabPosition(Qt::TopDockWidgetArea, QTabWidget::North);
+    d->_mainWindow->setTabPosition(Qt::BottomDockWidgetArea, QTabWidget::North);
     ConsoleWidget* localConsoleWidget = new ConsoleWidget(ConsoleModel::instance());
 
     //localConsoleWidget->setVisible(false);
-    if (!addWidget(localConsoleWidget, WidgetName::Console, WidgetArea::Bottom, WidgetType::DockWidget)) {
+    if (!addWidget(localConsoleWidget, "Console", WidgetArea::Bottom, WidgetType::DockWidget)) {
         qWarning() << "failed to insert Console Widget";
     }
+    addWidget(static_cast<Gui_Main_Window*>(d->_mainWindow)->toolBar(),"ToolBar",WidgetArea::Left,WidgetType::ToolBar);
+    addWidget(static_cast<Gui_Main_Window*>(d->_mainWindow)->statusBar(),"StatusBar",WidgetArea::NoArea,WidgetType::MenuBar);
 
     // plugin manager
-    _uiPluginManager = new GuiPluginManager(_mainWindow);
+    d->_uiPluginManager = new GuiPluginManager(d->_mainWindow);
+
 
 }
 
 GuiManager::~GuiManager()
 {
-    delete _uiPluginManager;
+    Q_D(GuiManager);
+    delete d->_uiPluginManager;
 }
 
 bool GuiManager::postInit()
 {
+    Q_D(GuiManager);
     showMainWindow();
-    _mainWindow->setDisabled(true);
+    d->_mainWindow->setDisabled(true);
 
     if (!ProjectManagerGui::instance()->start()) {
-        _mainWindow->close();
+        d->_mainWindow->close();
     }
 
-    _mainWindow->setDisabled(false);
+    d->_mainWindow->setDisabled(false);
 
     QSettings settings("Ruag", "traviz");
     settings.sync();
-    _mainWindow->restoreState(settings.value("windowState").toByteArray());
+    d->_mainWindow->restoreState(settings.value("windowState").toByteArray());
     //_mainWindow->restoreGeometry(settings.value("geometry").toByteArray());
-    _initialized = true;
+    d->_initialized = true;
     return true;
 }
 
 bool GuiManager::preDestroy()
 {
+    Q_D(GuiManager);
     QSettings settings("Ruag", "traviz");
     //settings.setValue("geometry", _mainWindow->saveGeometry());
-    settings.setValue("windowState", _mainWindow->saveState());
+    settings.setValue("windowState", d->_mainWindow->saveState());
     settings.sync();
     return true;
 }
 
 bool GuiManager::eventFilter(QObject* o, QEvent* e)
 {
-    if (o == _mainWindow && e->type() == QEvent::Close) {
+    Q_D(GuiManager);
+    if (o == d->_mainWindow && e->type() == QEvent::Close) {
         QCloseEvent* ce = (QCloseEvent*) e;
 
         // Go through all callbacks in callbacklist
-        for (int i = 0; i < _closeApplicationCallbacks.count(); i++) {
-            if (!(_closeApplicationCallbacks.at(i))()) {
+        for (int i = 0; i < d->_closeApplicationCallbacks.count(); i++) {
+            if (!(d->_closeApplicationCallbacks.at(i))()) {
                 // If a callback return false - interrup close procedure and
                 // ignore the close event
                 ce->ignore();
@@ -93,16 +101,16 @@ bool GuiManager::eventFilter(QObject* o, QEvent* e)
         }
 
         // Close all registred windows
-        for (int i = 0; i < _closeWindows.count(); i++) {
+        for (int i = 0; i < d->_closeWindows.count(); i++) {
             // If (Q)Pointer is still valid (Window not deleted yet)
-            if (_closeWindows.at(i)) {
+            if (d->_closeWindows.at(i)) {
                 // Hide window (deletion should be handled by owner)
-                _closeWindows.at(i)->hide();
+                d->_closeWindows.at(i)->hide();
             }
         }
     }
 
-    if (o == _mainWindow && e->type() == QEvent::ActivationChange) {
+    if (o == d->_mainWindow && e->type() == QEvent::ActivationChange) {
         emit mainWindowActivationChange();
     }
 
@@ -112,31 +120,34 @@ bool GuiManager::eventFilter(QObject* o, QEvent* e)
 
 void GuiManager::saveState()
 {
-    if (_initialized) {
+    Q_D(GuiManager);
+    if (d->_initialized) {
         QSettings settings("Ruag", "traviz");
-        settings.setValue("windowState", _mainWindow->saveState());
+        settings.setValue("windowState", d->_mainWindow->saveState());
     }
 }
 
 void GuiManager::registerCloseHandler(std::function<bool()> callback)
 {
-    _closeApplicationCallbacks.append(callback);
-
+    Q_D(GuiManager);
+    d->_closeApplicationCallbacks.append(callback);
 }
 
 QT_DEPRECATED void GuiManager::registerCloseWindow(QMainWindow* window)
 {
+    Q_D(GuiManager);
     //destroy the window in the destructor of the owner when possible!
-    _closeWindows.append(QPointer<QMainWindow>(window));
-
+    d->_closeWindows.append(QPointer<QMainWindow>(window));
 }
 
 bool GuiManager::mainWindowIsActive() const
 {
-    return _mainWindow->isActiveWindow();
+    Q_D(const GuiManager);
+    return d->_mainWindow->isActiveWindow();
 }
 void GuiManager::includeInMainmenue(QStringList menu, QAction* action)
 {
+    Q_D(GuiManager);
     if (action == NULL || menu.isEmpty()) {
         return;
     }
@@ -144,7 +155,7 @@ void GuiManager::includeInMainmenue(QStringList menu, QAction* action)
     QString rootMenu = menu.takeFirst();
     QMenu*  tmpMenue = NULL;
 
-    foreach (QAction* a, _menuBar->actions()) {
+    foreach (QAction* a, d->_menuBar->actions()) {
         if (rootMenu == a->text()) {
             tmpMenue = a->menu();
             break;
@@ -152,10 +163,8 @@ void GuiManager::includeInMainmenue(QStringList menu, QAction* action)
     }
 
     if (tmpMenue == NULL) {
-        tmpMenue = _menuBar->addMenu(rootMenu);
+        tmpMenue = d->_menuBar->addMenu(rootMenu);
     }
-
-
     for (int i = 0; i < menu.size(); ++i) {
         bool findItem = false;
         QString text = menu.at(i);
@@ -169,24 +178,24 @@ void GuiManager::includeInMainmenue(QStringList menu, QAction* action)
         }
 
         if (!findItem) {
-            tmpMenue = _menuBar->addMenu(text);
+            tmpMenue = d->_menuBar->addMenu(text);
         }
     }
 
     tmpMenue->addAction(action);
-
 }
 
 QAction* GuiManager::action(QString name)
 {
-    foreach (QAction* a, _menuBar->actions()) {
+    Q_D(GuiManager);
+    foreach (QAction* a, d->_menuBar->actions()) {
         QMenu* submenu = a->menu();
 
         if (submenu == NULL) {
             continue;
         }
 
-        QAction* sub = action(submenu, name);
+        QAction* sub = d->action(submenu, name);
 
         if (sub != NULL) {
             return sub;
@@ -196,7 +205,7 @@ QAction* GuiManager::action(QString name)
     return NULL;
 }
 
-QAction* GuiManager::action(QMenu* parent, QString name)
+QAction* GuiManagerPrivate::action(QMenu* parent, QString name)
 {
     foreach (QAction* a, parent->actions()) {
         if (a->text().replace("&", "") == name) {
@@ -220,9 +229,10 @@ QAction* GuiManager::action(QMenu* parent, QString name)
 }
 
 
-bool GuiManager::addWidget(QWidget* widget, WidgetName name, WidgetArea area, WidgetType type)
+bool GuiManager::addWidget(QWidget* widget, QString name, WidgetArea area, WidgetType type)
 {
-    if (_widgets.contains(static_cast<quint32>(name)) || widget == NULL) {
+    Q_D(GuiManager);
+    if (d->_widgets.contains(name) || widget == NULL) {
         return false;
     }
 
@@ -235,8 +245,8 @@ bool GuiManager::addWidget(QWidget* widget, WidgetName name, WidgetArea area, Wi
             return false;
         }
 
-        includeInMainmenue(_menuViewList, dockWidget->toggleViewAction());
-        _mainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(area), dockWidget);
+        includeInMainmenue(d->_menuViewList, dockWidget->toggleViewAction());
+        d->_mainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(area), dockWidget);
         connect(dockWidget, &QDockWidget::dockLocationChanged, this, &GuiManager::saveState);
         connect(dockWidget, &QDockWidget::visibilityChanged, this, &GuiManager::saveState);
         break;
@@ -244,19 +254,21 @@ bool GuiManager::addWidget(QWidget* widget, WidgetName name, WidgetArea area, Wi
 
     case WidgetType::ToolBar: {
         QToolBar* toolBar = dynamic_cast<QToolBar*>(widget);
+        connect(toolBar, &QToolBar::topLevelChanged, this, &GuiManager::saveState);
+        connect(toolBar, &QToolBar::visibilityChanged, this, &GuiManager::saveState);
 
         if (toolBar == NULL) {
             return false;
         }
 
-        includeInMainmenue(_menuViewList, toolBar->toggleViewAction());
-        _mainWindow->addToolBar(static_cast<Qt::ToolBarArea>(area), toolBar);
+        includeInMainmenue(d->_menuViewList, toolBar->toggleViewAction());
+        d->_mainWindow->addToolBar(static_cast<Qt::ToolBarArea>(area), toolBar);
         break;
     }
 
     case WidgetType::CentralWidget:
         //includeInMainmenue(_menuViewList, widget->);
-        _mainWindow->setCentralWidget(widget);
+        d->_mainWindow->setCentralWidget(widget);
         break;
 
     case WidgetType::MenuBar: {
@@ -266,7 +278,7 @@ bool GuiManager::addWidget(QWidget* widget, WidgetName name, WidgetArea area, Wi
             return false;
         }
 
-        _mainWindow->setMenuBar(menuBar);
+        d->_mainWindow->setMenuBar(menuBar);
         break;
     }
 
@@ -277,33 +289,34 @@ bool GuiManager::addWidget(QWidget* widget, WidgetName name, WidgetArea area, Wi
             return false;
         }
 
-        _mainWindow->setStatusBar(statusBar);
+        d->_mainWindow->setStatusBar(statusBar);
         break;
     }
     }
 
-    _widgets.insert(static_cast<quint32>(name), qMakePair<WidgetType, QWidget*>(type, widget));
+    d->_widgets.insert(name, qMakePair<WidgetType, QWidget*>(type, widget));
     return true;
 }
 
-bool GuiManager::moveWidget(WidgetName name, WidgetArea area)
+bool GuiManager::moveWidget(QString name, WidgetArea area)
 {
-    if (!_widgets.contains(static_cast<quint32>(name))) {
+    Q_D(GuiManager);
+    if (!d->_widgets.contains(name)) {
         return false;
     }
 
-    QWidget* widget = _widgets[static_cast<quint32>(name)].second;
-    WidgetType type = _widgets[static_cast<quint32>(name)].first;
+    QWidget* widget = d->_widgets[name].second;
+    WidgetType type = d->_widgets[name].first;
 
     switch (type) {
     case WidgetType::DockWidget:
         //_mainWindow->removeDockWidget(dynamic_cast<QDockWidget*>(widget));
-        _mainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(area),
+        d->_mainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(area),
                                    dynamic_cast<QDockWidget*>(widget));
         break;
 
     case WidgetType::ToolBar:
-        _mainWindow->addToolBar(static_cast<Qt::ToolBarArea>(area),
+        d->_mainWindow->addToolBar(static_cast<Qt::ToolBarArea>(area),
                                 dynamic_cast<QToolBar*>(widget));
         break;
 
@@ -314,20 +327,22 @@ bool GuiManager::moveWidget(WidgetName name, WidgetArea area)
     return true;
 }
 
-void GuiManager::setVisible(WidgetName name, bool visible)
+void GuiManager::setVisible(QString name, bool visible)
 {
-    _widgets[static_cast<quint32>(name)].second->setVisible(visible);
+    Q_D(GuiManager);
+    d->_widgets[name].second->setVisible(visible);
 }
 
-QWidget* GuiManager::removeWidget(WidgetName name)
+QWidget* GuiManager::removeWidget(QString name)
 {
-    QWidget* widget = _widgets.take(static_cast<quint32>(name)).second;
-    WidgetType type = _widgets.take(static_cast<quint32>(name)).first;
+    Q_D(GuiManager);
+    QWidget* widget = d->_widgets.take(name).second;
+    WidgetType type = d->_widgets.take(name).first;
 
     switch (type) {
     case WidgetType::CentralWidget:
-        if (widget == _mainWindow->centralWidget()) {
-            _mainWindow->takeCentralWidget();
+        if (widget == d->_mainWindow->centralWidget()) {
+            d->_mainWindow->takeCentralWidget();
         } else {
             widget = NULL;
         }
@@ -335,8 +350,8 @@ QWidget* GuiManager::removeWidget(WidgetName name)
         break;
 
     case WidgetType::MenuBar:
-        if (widget == _mainWindow->menuBar()) {
-            _mainWindow->setMenuBar(NULL);
+        if (widget == d->_mainWindow->menuBar()) {
+            d->_mainWindow->setMenuBar(NULL);
         } else {
             widget = NULL;
         }
@@ -344,8 +359,8 @@ QWidget* GuiManager::removeWidget(WidgetName name)
         break;
 
     case WidgetType::StatusBar:
-        if (widget == _mainWindow->statusBar()) {
-            _mainWindow->setStatusBar(NULL);
+        if (widget == d->_mainWindow->statusBar()) {
+            d->_mainWindow->setStatusBar(NULL);
         } else {
             widget = NULL;
         }
@@ -353,12 +368,13 @@ QWidget* GuiManager::removeWidget(WidgetName name)
         break;
 
     case WidgetType::DockWidget:
-        _mainWindow->removeDockWidget(dynamic_cast<QDockWidget*>(widget));
+        d->_mainWindow->removeDockWidget(dynamic_cast<QDockWidget*>(widget));
         disconnect(dynamic_cast<QDockWidget*>(widget), NULL, this, NULL);
         break;
 
     case WidgetType::ToolBar:
-        _mainWindow->removeToolBar(dynamic_cast<QToolBar*>(widget));
+        d->_mainWindow->removeToolBar(dynamic_cast<QToolBar*>(widget));
+        disconnect(dynamic_cast<QToolBar*>(widget), NULL, this, NULL);
         break;
     }
 
@@ -367,17 +383,24 @@ QWidget* GuiManager::removeWidget(WidgetName name)
 
 void GuiManager::showMainWindow()
 {
-    _mainWindow->setGeometry(QStyle::alignedRect(
+    Q_D(GuiManager);
+    d->_mainWindow->setGeometry(QStyle::alignedRect(
                                  Qt::LeftToRight,
                                  Qt::AlignCenter,
-                                 _mainWindow->size(),
+                                 d->_mainWindow->size(),
                                  qApp->desktop()->availableGeometry()));
-    _mainWindow->show();
+    d->_mainWindow->show();
     //showMaximized causes problems with awesome-wm.
 }
 
 
 QWidget* GuiManager::widgetReference()
 {
-    return _mainWindow;
+    Q_D(GuiManager);
+    return d->_mainWindow;
+}
+
+GuiManagerPrivate::GuiManagerPrivate(GuiManager* parent) :
+    q_ptr(parent)
+{
 }

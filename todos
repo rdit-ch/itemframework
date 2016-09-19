@@ -1,0 +1,12 @@
+[ ] Itemframework API private (bereits begonnen. gui_manager muss aber noch weiter refactored werden)
+[x] item template: segfault when plugin is no longer available/loaded
+[x] create usercore.pri starter.pri with the boilerplate code
+[x] fix usercore.h including itself
+[x] remove wronlgy commited files: src/helper/domhelper.bakkkkk und itemframework-example/tree/master/usercore/build/linux/release
+[x] rename core_export to itemframework_export
+[x] dragging a new item from the toolbox, doesnt render label (type)
+[ ] (NEW) AbstractItem::boundingRect does not account for name and type labels
+[ ] README's (already started)
+[x] build dst should be inside of itemframework, see jsontable. nothing should ever refer to something outside of the project root directory
+[ ] rewrite author emails to be @rdit.ch and tell Seba which accounts need to be created (e.g. fabian.schlaepfer@rdit.ch)
+[ ] incorperate changes from traviz project's pro files into example

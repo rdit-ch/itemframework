@@ -20,7 +20,7 @@ To get started, clone the [Example Project](https://gitlab.rdit.ch/rtv/itemframe
 Take a look at projects which use the Itemframework:
 
 * [Traviz](https://gitlab.rdit.ch/rtv/traviz): A Toolbox to process & visualize network- and other data. The Items use Json to communicate.
-* [Roviz](https://gitlab.rdit.ch/Robot/roviz/): An Application to experiment with image processing tools for a autonomous robot platform.
+* [RoViz](https://gitlab.rdit.ch/Robot/roviz/): An Application to experiment with image processing tools for a autonomous robot platform.
 
 
 ## License
@@ -31,4 +31,4 @@ GPLv3. Contact us if you would like to use it under a different license (e.g. co
 ## Contact
 
 Rdit.ch  
-contact@rdit.ch
+[contact@rdit.ch](mailto:contact@rdit.ch)

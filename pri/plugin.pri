@@ -17,6 +17,10 @@ OBJECTS_DIR     =  $$PLUGIN/obj/
 MOC_DIR         =  $$PLUGIN/moc/
 
 DESTDIR          = $$BUILDDIR/plugins
+unix:macx {
+    DESTDIR      = $$BUILDDIR/traviz.app/Contents/MacOS/plugins
+}
+
 LIBS            += -L$$BUILDDIR -l$$ITEMFRAMEWORK_LIB
 
 # Include and link against usercore
@@ -30,3 +34,4 @@ INCLUDEPATH     += \
 
 USERCORE_LIB     = usercore
 LIBS            += -L$$BUILDDIR -l$$USERCORE_LIB
+

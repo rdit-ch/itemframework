@@ -26,4 +26,8 @@ MOC_DIR      =  $$USERCORE/moc/
 
 LIBS += -L$$BUILDDIR
 
+macx {
+    QMAKE_LFLAGS_SONAME  = -Wl,-install_name,@rpath/
+}
+
 DESTDIR = $$BUILDDIR

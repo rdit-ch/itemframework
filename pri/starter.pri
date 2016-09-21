@@ -12,17 +12,21 @@ INCLUDEPATH += $$ITEMFRAMEWORK_ROOT/include \
                $$USERCORE/include
 
 # Link against itemframework and usercore
-LIBS += -L$$BUILDDIR -l$$ITEMFRAMEWORK_LIB
-LIBS += -L$$BUILDDIR -lusercore
+LIBS        += -L$$BUILDDIR -l$$ITEMFRAMEWORK_LIB
+LIBS        += -L$$BUILDDIR -lusercore
 
-DESTDIR = $$BUILDDIR
+DESTDIR      = $$BUILDDIR
 
-OBJECTS_DIR = $$STARTER/obj/
-MOC_DIR = $$STARTER/moc/
+OBJECTS_DIR  = $$STARTER/obj/
+MOC_DIR      = $$STARTER/moc/
 
 # Set Libary path to executable programm file ($ORIGIN)
-unix:!mac{
-  QMAKE_LFLAGS  += -Wl,--rpath=\\\$\$ORIGIN
-# Link against libsegfault
-  QMAKE_LFLAGS  += -lSegFault
+unix:!mac {
+  QMAKE_LFLAGS += -Wl,--rpath=\\\$\$ORIGIN
+  QMAKE_LFLAGS += -lSegFault
+}
+
+macx {
+  QMAKE_RPATHDIR += $$BUILDDIR
+  QMAKE_RPATHDIR += /usr/local/lib/
 }

@@ -142,13 +142,13 @@ void ItemScene::updateConnectionLine()
     _connectionLine->setLine(QLineF{_startPoint, _endPoint});
 }
 
-QList<QGraphicsItem*> ItemScene::readItems(QDomDocument const& document)
+QList<QGraphicsItem*> ItemScene::readItems(QDomDocument const& document, bool shouldConnectIO)
 {
     QList<QGraphicsItem*> items;
 
     QDomElement root = document.documentElement();
 
-    if (!loadFromXml(root, &items, false)) {
+    if (!loadFromXml(root, &items, false, shouldConnectIO)) {
         qDebug() << "Error while trying to load items: Copy-Creation from xml failed";
     }
 
@@ -365,7 +365,11 @@ void ItemScene::copy(QList<QGraphicsItem*> itms) const
 
 QPixmap ItemScene::createPixmap(QDomDocument const& itemsDocument)
 {
-    auto items = readItems(itemsDocument);
+    // Prevent data from flowing between items as that might trigger them to
+    // access global data. We just want to create a pixmap of the items.
+    bool const shouldConnectIO {false};
+
+    auto items = readItems(itemsDocument, shouldConnectIO);
     if (items.size() == 0) {
         return {};
     }
@@ -818,7 +822,7 @@ bool ItemScene::loadFromXml(QDomElement& dom)
     }
 }
 
-bool ItemScene::loadFromXml(QDomElement& dom, QList<QGraphicsItem*>* itemsOut, bool reportProgress)
+bool ItemScene::loadFromXml(QDomElement& dom, QList<QGraphicsItem*>* itemsOut, bool reportProgress, bool shouldConnectIO)
 {
     if (itemsOut == nullptr) {
         return false;
@@ -935,7 +939,18 @@ bool ItemScene::loadFromXml(QDomElement& dom, QList<QGraphicsItem*>* itemsOut, b
                         } else if (output->transportType() != typeId) {
                             qCritical() << QString("Connector Type is %1. Output of Item %2 is of Type %3. Connector deleted.").arg(typeId).arg(fromItem->name()).arg(output->transportType());
                         } else {
+                            // Disable signals if we're only loading these
+                            // items in order to create a pixmap image.
+                            //
+                            // Simply not connecting the input and output
+                            // would not work since their appearance depends
+                            // on whether or not they are connected.
+                            if (!shouldConnectIO) {
+                                input->blockSignals(true);
+                                output->blockSignals(true);
+                            }
                             input->connectOutput(output); //data connection
+
                             Item_Connector* connector = new Item_Connector(output, input); //graphical connection
                             connector->load_additional(e); //load user modified path or custom routing
                             connector->do_update();

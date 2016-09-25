@@ -109,7 +109,8 @@ signals:
 
 private:
     bool saveToXml(QDomDocument& document, QDomElement& xml, QList<QGraphicsItem const*> itms) const;
-    bool loadFromXml(QDomElement& dom, QList<QGraphicsItem*>* itemsOut, bool reportProgress);
+    bool loadFromXml(QDomElement& dom, QList<QGraphicsItem*>* itemsOut,
+                     bool shouldReportProgress, bool shouldConnectIO = true);
 
     bool notesInInsertMode();
     void deleteItems(QList<QGraphicsItem*> items);
@@ -125,7 +126,7 @@ private:
     void paintItem(QGraphicsItem* item, QPainter& painter, QStyleOptionGraphicsItem& options) const;
 
     QRectF calculateBoundingBox(QList<QGraphicsItem const*> items, bool ignoreConnectors = false) const;
-    QList<QGraphicsItem*> readItems(QDomDocument const& document);
+    QList<QGraphicsItem*> readItems(QDomDocument const& document, bool shouldConnectIO = true);
     QList<QGraphicsItem*> readItems(class QMimeData const& mimeData, char const* const mimeType, char const* const docType);
 
     void insertItems(QList<QGraphicsItem*> items, const QPointF& scenePos, const QRectF& boundingBox);

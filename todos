@@ -8,5 +8,6 @@
 [ ] (NEW) AbstractItem::boundingRect does not account for name and type labels
 [ ] README's (already started)
 [x] build dst should be inside of itemframework, see jsontable. nothing should ever refer to something outside of the project root directory
-[ ] rewrite author emails to be @rdit.ch and tell Seba which accounts need to be created (e.g. fabian.schlaepfer@rdit.ch)
-[ ] incorperate changes from traviz project's pro files into example
+[ ] (next week, after squash) rewrite author emails to be @rdit.ch and tell Seba which accounts need to be created (e.g. fabian.schlaepfer@rdit.ch)
+[x] incorperate changes from traviz project's pro files into example
+[ ] (NEW) integrate Qt Undo Framework

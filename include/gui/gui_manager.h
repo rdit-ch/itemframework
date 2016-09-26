@@ -56,7 +56,7 @@ public:
      * @param widget id that is removed
      * @return Pointer to QDockWidget. Null if nothing has been removed.
      */
-    QWidget* removeWidget(QString const name);
+    QWidget* removeWidget(QString const& name);
     /**
      * @brief Adds a widget to the mainwindow.
      * @param widget pointer to the widget
@@ -66,7 +66,7 @@ public:
      * (CentralWidget, MenuBar, StatusBar) is added, the old widget will be deleted.
      * @return true if the widget could be added
      */
-    bool addWidget(QWidget* widget, QString const name, WidgetArea area, WidgetType type = WidgetType::DockWidget);
+    bool addWidget(QWidget* widget, QString const& name, WidgetArea area, WidgetType type = WidgetType::DockWidget);
     /**
      * @brief Adds a widget to the mainwindow. \n Uses the objectName or className as name. \n
      * Appends a number if a a widget is already stored with that name
@@ -83,13 +83,13 @@ public:
      * @param area area where the widget will be moved to
      * @return true if the action was successful
      */
-    bool moveWidget(QString const name, WidgetArea area);
+    bool moveWidget(QString const& name, WidgetArea area);
     /**
      * @brief setVisible changes the visibility of a widget
      * @param name name of the widget
      * @param visible value that the visibility is set to
      */
-    void setVisible(QString const name, bool visible);
+    void setVisible(QString const& name, bool visible);
     /**
      * @brief showMainWindow makes tha main window visible
      */
@@ -100,34 +100,44 @@ public:
      */
     QWidget* widgetReference();
     /**
-     * @brief addAction adds an action a menu or a toolbar
-     * @param Action The action that is added, GuiManager doesn't takes ownership
-     * @param Name The name of the action, is used to access the action later on, must be unique
-     * @param Parent The name of the parent under which the action is added, can't be an action
+     * @brief  adds an action a menu or a toolbar
+     * @param Action The action that is added, GuiManager doesn't takes ownership, can't be NULL
+     * @param Name The name of the action, is used to access the action later on, must be unique or
+     * @param parent The name of the parent under which the action is added, parent must be an action that is a menu,
+     * a menubar when the action is a menu or a toolbar when the action isn't a menu
      * @return True when the action could be added
      */
-    bool addAction(QAction* action, QString const name, QString const parent);
+    bool addAction(QAction* action, QString const& name, QString const& parent);
+    /**
+     * @brief Adds the action name to the action or widget parent
+     * @param name Name of the action or widget, must be an action
+     * @param parent, The name of the parent under which the action is added, parent must be an action that is a menu,
+     * a menubar when the action is a menu or a toolbar when the action isn't a menu
+     * @return True when the action could be added to parent
+     */
+    bool addActionToParent(QString const& name, QString const& parent);
     /**
      * @brief Adds an action to a menu or a toolbar \n Uses the objectName or className as name. \n
      * Appends a number if something is already stored with that name
      * @param action Pointer to the action, GuiManager doesn't takes ownership
-     * @param parent Name of the parent under which the action is added
+     * @param parent The name of the parent under which the action is added, parent must be an action that is a menu,
+     * a menubar when the action is a menu or a toolbar when the action isn't a menu
      * @return name under which the action was added, is empty when the widget couldn't be added
      */
-    QString addAction(QAction* action, QString const parent);
+    QString addAction(QAction* action, QString const& parent);
     /**
      * @brief Access to reference of an action
      * @param name Name of the action
      * @return Reference to the action, NULL when it doesn't exist
      */
-    QAction* action(QString const name) const;
+    QAction* action(QString const& name) const;
     /**
      * @brief Removes an action from the gui and returns it.
      * @param name name of the action
      * @param parent parent of the action, will remove all occurences if string is empty. None when parent doesn't exist
      * @return removed action, NULL when name or parent doesn't exist
      */
-    QAction* removeAction(QString const name, QString const parent=QString());
+    QAction* removeAction(QString const& name, QString const& parent = QString());
     /**
      * @brief This callback will be executed by an application close event.
      * If the callback returns true the close process will be continue -> shutdown application.
@@ -140,13 +150,13 @@ public:
      * @param name Name of the action
      * @return List of the names of all parents of name
      */
-    QStringList parents(QString const name);
+    QStringList parents(QString const& name);
     /**
      * @brief Access to the names of the children of an registered action or widget
      * @param name Name of the action or widget
      * @return List of the names of all children of name
      */
-    QStringList children(QString const name);
+    QStringList children(QString const& name);
     /**
      * @brief Access to all the names of the registered actions
      * @return List containing all names of the registered actions
@@ -162,11 +172,13 @@ public:
      * @return State of the main window
      */
     bool mainWindowIsActive() const;
-public slots:
+
 signals:
+    /**
+     * @brief is emited when the activation of the main window changed
+     */
     void mainWindowActivationChange();
-protected:
-    bool eventFilter(QObject*, QEvent*);
+
 private:
     QScopedPointer<class GuiManagerPrivate> const d_ptr;
     Q_DECLARE_PRIVATE(GuiManager)

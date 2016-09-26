@@ -37,18 +37,27 @@ public:
     bool _initialized = false;
 
     QStringList findTypes(WidgetType type) const;
-    static bool isType(QWidget* widget, WidgetType type, QString const name);
-    bool nameUsed(QString const name);
-    bool validParent(QString const name, QAction *action);
-    QString registerAction(QAction* action, const QString parent, bool recursive=true);
+    static bool isType(QWidget* widget, WidgetType type, QString const& name);
+    bool nameUsed(QString const& name);
+    /**
+     * @brief Checks if the name is a valid parent to action
+     * @param name Name of the Parent, must be an action that is a menu,
+     * a menubar when the action is a menu or a toolbar when the action isn't a menu
+     * @param action mustn't be NULL
+     * @return true when
+     */
+    bool validParent(QString const& name, QAction *action);
+    QString registerAction(QAction* action, QString const& parent, bool recursive=true);
     /**
      * @brief unregisterAction removes an action from the internal QHash
      * @param name name of the action
      * @param parent parent of the action
      */
-    void unregisterAction(QString const name, QString const parent);
+    void unregisterAction(QString const& name, QString const& parent);
 public slots:
     void saveState();
+protected:
+    bool eventFilter(QObject*, QEvent*);
 
 };
 #endif // GUI_MANAGER_P_H

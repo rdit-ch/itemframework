@@ -30,7 +30,7 @@ enum class WidgetArea {
 };
 
 /**
- * @brief The GuiManager class handels widgets on the main window and
+ * @brief The GuiManager class handels widgets and actions on the main window
  */
 class ITEMFRAMEWORK_EXPORT GuiManager : public QObject, public Singleton<GuiManager>
 {
@@ -59,7 +59,7 @@ public:
     QWidget* removeWidget(QString const& name);
     /**
      * @brief Adds a widget to the mainwindow.
-     * @param widget pointer to the widget
+     * @param widget pointer to the widget, action that are already within a Toolbar or MenuBar are also registered whe
      * @param name name of the specified widget, name can be used to access the widget later, must be unique
      * @param area dock- or toolbox-area where the widget will be placed, use WidgetType::NoArea for other widgets
      * @param type what type of widget it is. Note that if a widget with a type that occurs only once
@@ -70,7 +70,7 @@ public:
     /**
      * @brief Adds a widget to the mainwindow. \n Uses the objectName or className as name. \n
      * Appends a number if a a widget is already stored with that name
-     * @param widget pointer to the widget
+     * @param widget pointer to the widget, action that are already within a Toolbar or MenuBar are also registered
      * @param area dock- or toolbox-area where the widget will be placed, use WidgetType::NoArea for other widgets
      * @param type what type of widget it is. Note that if a widget with a type that occurs only once
      * (CentralWidget, MenuBar, StatusBar) is added, the old widget will be deleted.

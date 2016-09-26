@@ -212,12 +212,13 @@ bool GuiManager::addActionToParent(QString const& name, QString const& parent)
 {
     Q_D(GuiManager);
 
-    QAction* action=d->_actions.value(name).action;
+    QAction* action = d->_actions.value(name).action;
 
     //parent needs to ba a valid parent to name
     if (!d->validParent(parent, action)) {
         return false;
     }
+
     if (d->_widgets.contains(parent)) {
         if (action->menu()) {
             qobject_cast<QMenuBar*>(d->_widgets.value(parent).widget.data())->addMenu(action->menu());
@@ -230,6 +231,7 @@ bool GuiManager::addActionToParent(QString const& name, QString const& parent)
         d->_actions.value(parent).action->menu()->addAction(action);
         d->_actions[parent].children.append(name);
     }
+
     d->_actions[name].parents.append(parent);
     return true;
 }
@@ -489,6 +491,9 @@ bool GuiManager::addWidget(QWidget* widget, QString const& name, WidgetArea area
 
     case WidgetType::ToolBar: {
         QToolBar* toolBar = qobject_cast<QToolBar*>(widget);
+        for (QAction* action : toolBar->actions()) {
+            d->registerAction(action, name);
+        }
         connect(toolBar, &QToolBar::topLevelChanged, d, &GuiManagerPrivate::saveState);
         connect(toolBar, &QToolBar::visibilityChanged, d, &GuiManagerPrivate::saveState);
         addAction(toolBar->toggleViewAction(), "menuView");
@@ -497,23 +502,32 @@ bool GuiManager::addWidget(QWidget* widget, QString const& name, WidgetArea area
     }
 
     case WidgetType::CentralWidget: {
-        d->_mainWindow->setCentralWidget(widget);
+
         QStringList oldNames = d->findTypes(WidgetType::CentralWidget);
 
         for (auto oldName : oldNames) {
-            d->_widgets.remove(oldName);
+            for (QString const& child : d->_widgets.take(oldName).children) {
+                removeAction(child, oldName);
+            }
         }
 
+        d->_mainWindow->setCentralWidget(widget);
         break;
     }
 
     case WidgetType::MenuBar: {
         QMenuBar* menuBar = qobject_cast<QMenuBar*>(widget);
+
+        for (QAction* action : menuBar->actions()) {
+            d->registerAction(action, name);
+        }
         d->_mainWindow->setMenuBar(menuBar);
         QStringList oldNames = d->findTypes(WidgetType::MenuBar);
 
         for (auto oldName : oldNames) {
-            d->_widgets.remove(oldName);
+            for (QString const& child : d->_widgets.take(oldName).children) {
+                removeAction(child, oldName);
+            }
         }
 
         break;
@@ -525,7 +539,9 @@ bool GuiManager::addWidget(QWidget* widget, QString const& name, WidgetArea area
         QStringList oldNames = d->findTypes(WidgetType::StatusBar);
 
         for (auto oldName : oldNames) {
-            d->_widgets.remove(oldName);
+            for (QString const& child : d->_widgets.take(oldName).children) {
+                removeAction(child, oldName);
+            }
         }
 
         break;
@@ -577,7 +593,6 @@ bool GuiManager::moveWidget(QString const& name, WidgetArea area)
 
     switch (type) {
     case WidgetType::DockWidget:
-        //_mainWindow->removeDockWidget(qobject_cast<QDockWidget*>(widget));
         d->_mainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(area),
                                       qobject_cast<QDockWidget*>(widget));
         break;
@@ -603,8 +618,13 @@ void GuiManager::setVisible(QString const& name, bool visible)
 QWidget* GuiManager::removeWidget(QString const& name)
 {
     Q_D(GuiManager);
-    QWidget* widget = d->_widgets.take(name).widget;
-    WidgetType type = d->_widgets.take(name).type;
+    QWidget* widget = d->_widgets.value(name).widget;
+    WidgetType type = d->_widgets.value(name).type;
+    QStringList children = d->_widgets.take(name).children;
+
+    if (!widget) {
+        return NULL;
+    }
 
     switch (type) {
     case WidgetType::CentralWidget:
@@ -643,6 +663,13 @@ QWidget* GuiManager::removeWidget(QString const& name)
         d->_mainWindow->removeToolBar(qobject_cast<QToolBar*>(widget));
         disconnect(qobject_cast<QToolBar*>(widget), NULL, this, NULL);
         break;
+    }
+
+    //if widget was removed, remove it's children also from the hash
+    if (widget) {
+        for (QString const& child : children) {
+            d->unregisterAction(child, name);
+        }
     }
 
     return widget;

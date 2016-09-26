@@ -17,6 +17,11 @@ QToolBar *Gui_Main_Window::toolBar()
     return ui->toolBar;
 }
 
+QMenuBar *Gui_Main_Window::menuBar()
+{
+    return ui->menubar;
+}
+
 Gui_Main_Window::~Gui_Main_Window()
 {
     delete ui;

@@ -51,41 +51,45 @@ protected:
 
 public:
     /**
-     * @brief removeFromLayout removes dock widget from the GUI.
+     * @brief removeFromLayout removes widget from the GUI.
      * Caller takes ownership of the widget
      * @param widget id that is removed
      * @return Pointer to QDockWidget. Null if nothing has been removed.
      */
-    QWidget* removeWidget(QString name);
+    QWidget* removeWidget(QString const name);
     /**
-     * @brief addWidget Adds a widget to the mainwindow.
-     * @param widget pointer to the widger
+     * @brief Adds a widget to the mainwindow.
+     * @param widget pointer to the widget
      * @param name name of the specified widget, name can be used to access the widget later, must be unique
-     * @param area dock- or toolbox-area where the widget will be placed
+     * @param area dock- or toolbox-area where the widget will be placed, use WidgetType::NoArea for other widgets
      * @param type what type of widget it is. Note that if a widget with a type that occurs only once
      * (CentralWidget, MenuBar, StatusBar) is added, the old widget will be deleted.
      * @return true if the widget could be added
      */
-    bool addWidget(QWidget* widget, QString name, WidgetArea area, WidgetType type = WidgetType::DockWidget);
+    bool addWidget(QWidget* widget, QString const name, WidgetArea area, WidgetType type = WidgetType::DockWidget);
+    /**
+     * @brief Adds a widget to the mainwindow. \n Uses the objectName or className as name. \n
+     * Appends a number if a a widget is already stored with that name
+     * @param widget pointer to the widget
+     * @param area dock- or toolbox-area where the widget will be placed, use WidgetType::NoArea for other widgets
+     * @param type what type of widget it is. Note that if a widget with a type that occurs only once
+     * (CentralWidget, MenuBar, StatusBar) is added, the old widget will be deleted.
+     * @return name under which the widget was added, is empty when the widget couldn't be added
+     */
+    QString addWidget(QWidget* widget, WidgetArea area, WidgetType type = WidgetType::DockWidget);
     /**
      * @brief moveWidget change the position of a widget
      * @param name name of the widget that should be moved
      * @param area area where the widget will be moved to
      * @return true if the action was successful
      */
-    bool moveWidget(QString name, WidgetArea area);
+    bool moveWidget(QString const name, WidgetArea area);
     /**
      * @brief setVisible changes the visibility of a widget
      * @param name name of the widget
      * @param visible value that the visibility is set to
      */
-    void setVisible(QString name, bool visible);
-    /**
-     * @brief includeInMainmenue Includes an action in a menu
-     * @param menu string of the menu
-     * @param action action that is added
-     */
-    void includeInMainmenue(QStringList menu, QAction* action);
+    void setVisible(QString const name, bool visible);
     /**
      * @brief showMainWindow makes tha main window visible
      */
@@ -96,11 +100,34 @@ public:
      */
     QWidget* widgetReference();
     /**
-     * @brief action Access to an action
-     * @param name Name of the action
-     * @return Reference to the action
+     * @brief addAction adds an action a menu or a toolbar
+     * @param Action The action that is added, GuiManager doesn't takes ownership
+     * @param Name The name of the action, is used to access the action later on, must be unique
+     * @param Parent The name of the parent under which the action is added, can't be an action
+     * @return True when the action could be added
      */
-    QAction* action(QString name);
+    bool addAction(QAction* action, QString const name, QString const parent);
+    /**
+     * @brief Adds an action to a menu or a toolbar \n Uses the objectName or className as name. \n
+     * Appends a number if something is already stored with that name
+     * @param action Pointer to the action, GuiManager doesn't takes ownership
+     * @param parent Name of the parent under which the action is added
+     * @return name under which the action was added, is empty when the widget couldn't be added
+     */
+    QString addAction(QAction* action, QString const parent);
+    /**
+     * @brief Access to reference of an action
+     * @param name Name of the action
+     * @return Reference to the action, NULL when it doesn't exist
+     */
+    QAction* action(QString const name) const;
+    /**
+     * @brief Removes an action from the gui and returns it.
+     * @param name name of the action
+     * @param parent parent of the action, will remove all occurences if string is empty. None when parent doesn't exist
+     * @return removed action, NULL when name or parent doesn't exist
+     */
+    QAction* removeAction(QString const name, QString const parent=QString());
     /**
      * @brief This callback will be executed by an application close event.
      * If the callback returns true the close process will be continue -> shutdown application.
@@ -108,23 +135,41 @@ public:
      * @param std::function<bool> callback
      */
     void registerCloseHandler(std::function<bool()> callback);
-    void registerCloseWindow(QMainWindow* window);
+    /**
+     * @brief Access to the names of the parents of an registered action
+     * @param name Name of the action
+     * @return List of the names of all parents of name
+     */
+    QStringList parents(QString const name);
+    /**
+     * @brief Access to the names of the children of an registered action or widget
+     * @param name Name of the action or widget
+     * @return List of the names of all children of name
+     */
+    QStringList children(QString const name);
+    /**
+     * @brief Access to all the names of the registered actions
+     * @return List containing all names of the registered actions
+     */
+    QStringList registeredActions();
+    /**
+     * @brief Access to all the names of the registered widgets
+     * @return List containing all names of the registered widgets
+     */
+    QStringList registeredWidgets();
     /**
      * @brief mainWindowIsActive
      * @return State of the main window
      */
     bool mainWindowIsActive() const;
+public slots:
+signals:
+    void mainWindowActivationChange();
+protected:
+    bool eventFilter(QObject*, QEvent*);
 private:
     QScopedPointer<class GuiManagerPrivate> const d_ptr;
     Q_DECLARE_PRIVATE(GuiManager)
 
-protected:
-    bool eventFilter(QObject*, QEvent*);
-public slots:
-
-private slots:
-    void saveState();
-signals:
-    void mainWindowActivationChange();
 };
 #endif // GUI_MANAGER_H

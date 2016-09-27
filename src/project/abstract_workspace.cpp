@@ -41,6 +41,14 @@ bool AbstractWorkspace::setWorkspaceProperties(const QDomDocument& domDocument)
     _majorWorkspaceVersion = majorVersion;
     _minorWorkspaceVersion = minorVersion;
 
+    if (!_settingsScope->load(rootElement)) {
+        return false;
+    }
+
+    QObject::connect(_settingsScope.data(), &SettingsScope::scopeChanged, this, [this]() {
+        save();
+    });
+
     return true;
 }
 
@@ -49,7 +57,7 @@ QDomDocument AbstractWorkspace::workspaceDomDocument() const
     return _workspaceDomDocument;
 }
 
-void AbstractWorkspace::setWorkspaceDomDocument(const QDomDocument &workspaceDomDocument)
+void AbstractWorkspace::setWorkspaceDomDocument(const QDomDocument& workspaceDomDocument)
 {
     _workspaceDomDocument = workspaceDomDocument;
 }
@@ -111,7 +119,7 @@ bool AbstractWorkspace::isValid() const
 
 void AbstractWorkspace::setValid(bool isValid)
 {
-    if(_isValid == isValid){
+    if (_isValid == isValid) {
         return;
     }
 
@@ -156,11 +164,12 @@ QVector<QSharedPointer<AbstractProject> > AbstractWorkspace::projects() const
 
 QSharedPointer<AbstractProject> AbstractWorkspace::project(QString connectionString) const
 {
-    for(QSharedPointer<AbstractProject> project : _projects){
-        if(project->connectionString() == connectionString){
+    for (QSharedPointer<AbstractProject> project : _projects) {
+        if (project->connectionString() == connectionString) {
             return project;
         }
     }
+
     return QSharedPointer<AbstractProject>();
 }
 
@@ -256,7 +265,8 @@ QDomDocument AbstractWorkspace::workspaceDomDocumentTemplate(const QString& name
 bool AbstractWorkspace::validateWorkspaceDomDocument(const QDomDocument& domDocument)
 {
     QDomDocument const workspaceDomDocument = domDocument;
-    if(workspaceDomDocument.isNull()){
+
+    if (workspaceDomDocument.isNull()) {
         return false;
     }
 
@@ -400,4 +410,3 @@ void AbstractWorkspace::resetProjects() const
         project->reset();
     }
 }
-

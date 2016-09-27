@@ -156,17 +156,23 @@ public:
      * @param name Name of the action or widget
      * @return List of the names of all children of name
      */
-    QStringList children(QString const& name);
+    QStringList children(QString const& name) const;
     /**
      * @brief Access to all the names of the registered actions
      * @return List containing all names of the registered actions
      */
-    QStringList registeredActions();
+    QStringList registeredActions()const;
     /**
      * @brief Access to all the names of the registered widgets
      * @return List containing all names of the registered widgets
      */
-    QStringList registeredWidgets();
+    QStringList registeredWidgets() const;
+    /**
+     * @brief registeredWidgets return all registered widgets of the given type
+     * @param type Type to be returned
+     * @return Names of widgets
+     */
+    QStringList registeredWidgets(WidgetType type) const;
     /**
      * @brief mainWindowIsActive
      * @return State of the main window

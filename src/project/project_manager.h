@@ -37,6 +37,7 @@ private:
 
 signals:
     void recentWorkspaceListChanged();
+    void workspaceChanged();
 };
 
 #endif // PROJECT_MANAGER_H

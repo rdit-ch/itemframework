@@ -27,16 +27,13 @@ public:
     Q_DECLARE_PUBLIC(GuiManager)
 
     QMainWindow* _mainWindow;
-    QStringList _menuViewList;
 
     QList<std::function<bool()>> _closeApplicationCallbacks;
-    QList<QPointer<QMainWindow>> _closeWindows;
     class GuiPluginManager* _uiPluginManager;
     QHash<QString, Widget> _widgets;
     QHash<QString, Action> _actions;
     bool _initialized = false;
 
-    QStringList findTypes(WidgetType type) const;
     static bool isType(QWidget* widget, WidgetType type, QString const& name);
     bool nameUsed(QString const& name);
     /**
@@ -54,8 +51,11 @@ public:
      * @param parent parent of the action
      */
     void unregisterAction(QString const& name, QString const& parent);
+    void unregisterActions(QStringList const& list);
 public slots:
     void saveState();
+    void loadState();
+
 protected:
     bool eventFilter(QObject*, QEvent*);
 

@@ -151,7 +151,7 @@ void SettingsScope::setParentScope(SettingsScope* newParent)
         // notified of parent value changes. The signal will be resent by this scope, if this scope
         // has no value (which means use the parent scope's value) for the related key!
         if (newParent != NULL) {
-            QObject::connect(newParent, &SettingsScope::valueChanged,
+            QObject::connect(newParent, &SettingsScope::valueChanged, this,
             [this](const QString & key, const QVariant & value) {
                 Q_D(SettingsScope);
 

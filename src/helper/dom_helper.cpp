@@ -43,7 +43,7 @@ bool DomHelper::saveVariant(const QVariant& variant, QDomElement element,
             attributeValue = str;
         }
     } else if (variant.canConvert(QMetaType::QString) &&
-               QVariant(QString()).canConvert(variant.userType())) {
+               QVariant(QString()).canConvert(variant.userType())&&variant.type()!=QVariant::ByteArray) {
         // As this variant type can be converted to string and vice versa, the string value is
         // stored
         attributeValue = variant.toString();

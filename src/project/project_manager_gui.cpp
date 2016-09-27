@@ -306,6 +306,11 @@ QString ProjectManagerGui::lastError() const
     return _lastError;
 }
 
+ProjectManager *ProjectManagerGui::projectManager()
+{
+    return _projectManager;
+}
+
 void ProjectManagerGui::openWorkspaceManager()
 {
     showSelectWorkspaceDialog();

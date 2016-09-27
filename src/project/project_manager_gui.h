@@ -36,6 +36,7 @@ public:
     int showSelectWorkspaceDialog();
     bool openWorkspace(QSharedPointer<AbstractWorkspace> workspace);
     QString lastError() const;
+    ProjectManager *projectManager();
 
 private:
     void setMainGuiElements();

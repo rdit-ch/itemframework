@@ -72,15 +72,14 @@ void FileWorkspace::initProjects()
     // Get root dom element (xml -> TravizWorkspace) of workspaceDomDocument
     const QDomElement rootElement = workspaceDomDocument().documentElement();
     // Get first project dom node (xml -> TravizProject) of workspaceDomDocument
-    QDomNode projectNode = rootElement.firstChild();
+    QDomElement projectElement = rootElement.firstChildElement(ProDomElmTagPro);
 
     // For each project dom node in workspaceDomDocument
-    while (!projectNode.isNull()) {
+    while (!projectElement.isNull()) {
         // Analyze project xml structure of workspace dom document
         // Get project dom element from node.
-        QDomElement projectElement = projectNode.toElement();
 
-        if (!projectElement.isNull()) {
+
             bool fastLoad = false;
 
             // Check attribute fast load is available.
@@ -93,7 +92,7 @@ void FileWorkspace::initProjects()
             if (!projectElement.hasChildNodes()) {
                 // Project information incomplete (xml error).
                 // No child nodes found. Ignore current project and go to next project dom node.
-                projectNode = projectNode.nextSibling();
+                projectElement = projectElement.nextSiblingElement(ProDomElmTagPro);
                 continue;
             }
 
@@ -103,7 +102,7 @@ void FileWorkspace::initProjects()
             if (projectFilePathElement.isNull()) {
                 // Project information incomplete (xml error).
                 // ProjectFilePath node is null Ignore current project and go to next project dom node.
-                projectNode = projectNode.nextSibling();
+                projectElement = projectElement.nextSiblingElement(ProDomElmTagPro);
                 continue;
             }
 
@@ -120,7 +119,7 @@ void FileWorkspace::initProjects()
             if (projectFilePath.isEmpty()) {
                 // Project information incomplete (xml error).
                 // ProjectFilePath node is null Ignore current project and go to next project dom node.
-                projectNode = projectNode.nextSibling();
+                projectElement = projectElement.nextSiblingElement(ProDomElmTagPro);
                 continue;
             }
 
@@ -137,10 +136,10 @@ void FileWorkspace::initProjects()
             project->setFastLoad(fastLoad);
             // Add project to this workspace. Remeber that the project can be invalid.
             addProject(project);
-        }
+
 
         // Set next project dom node as current.
-        projectNode = projectNode.nextSibling();
+        projectElement = projectElement.nextSiblingElement(ProDomElmTagPro);
     }
 }
 
@@ -215,7 +214,11 @@ bool FileWorkspace::save()
     if (file.open(openMode)) {
         QDomDocument workspaceDomDocument = workspaceDomDocumentTemplate(name(), version(), description());
         QDomElement rootDomElement = workspaceDomDocument.documentElement();
+        if(!settingsScope()->save(workspaceDomDocument,rootDomElement)){
+            setLastError("Failed to save setting scope");
 
+            return false;
+        }
         for (const QSharedPointer<AbstractProject>& project : projects()) {
             const QSharedPointer<FileProject> fileProject = qSharedPointerCast<FileProject>(project);
             const QString relProjectFile = FileHelper::absoluteToRelativeFilePath(fileProject->filePath(), _fileInfo.filePath());

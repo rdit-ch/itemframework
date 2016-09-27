@@ -14,7 +14,6 @@ ProjectManager::~ProjectManager()
 {
     _recentWorkspaces.clear();
 }
-
 QSharedPointer<AbstractWorkspace> ProjectManager::currentWorkspace() const
 {
     return _currentWorkspace;
@@ -24,6 +23,7 @@ void ProjectManager::setCurrentWorkspace(const QSharedPointer<AbstractWorkspace>
 {
     currentWorkspace->setLastUsedDateTime(QDateTime::currentDateTime().toString(LastUsedDateFormat));
     _currentWorkspace = currentWorkspace;
+    emit workspaceChanged();
     saveRecentWorkspacesSettings();
 }
 
@@ -80,7 +80,7 @@ QString ProjectManager::workDirectoryPath() const
     return _workDirectory;
 }
 
-void ProjectManager::setWorkDirectoryPath(const QString &workDirectoryPath)
+void ProjectManager::setWorkDirectoryPath(const QString& workDirectoryPath)
 {
     _workDirectory = workDirectoryPath;
     QSettings settings;

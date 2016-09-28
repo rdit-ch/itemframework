@@ -26,9 +26,6 @@ LIBS            += -L$$BUILDDIR -l$$ITEMFRAMEWORK_LIB
 # Include and link against usercore
 USERCORE         = $$PLUGIN/../../usercore
 
-message(USERCORE PLUGIN)
-message($$USERCORE)
-
 INCLUDEPATH     += \
                    $$USERCORE/include
 

@@ -24,7 +24,7 @@ unix:macx {
 LIBS            += -L$$BUILDDIR -l$$ITEMFRAMEWORK_LIB
 
 # Include and link against usercore
-USERCORE         = $$PLUGIN/../../usercore
+USERCORE         = $$PROJECT_ROOT/usercore
 
 INCLUDEPATH     += \
                    $$USERCORE/include

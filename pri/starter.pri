@@ -12,7 +12,7 @@ INCLUDEPATH += $$ITEMFRAMEWORK_ROOT/include \
                $$USERCORE/include
 
 # Link against itemframework and usercore
-LIBS        += -L$$BUILDDIR_ITEMFRAMEWORK -l$$ITEMFRAMEWORK_LIB
+LIBS        += -L$$BUILDDIR -l$$ITEMFRAMEWORK_LIB
 LIBS        += -L$$BUILDDIR -lusercore
 
 DESTDIR      = $$BUILDDIR

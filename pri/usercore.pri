@@ -24,7 +24,7 @@ UI_DIR       =  $$USERCORE/ui_header/
 OBJECTS_DIR  =  $$USERCORE/obj/
 MOC_DIR      =  $$USERCORE/moc/
 
-LIBS += -L$$BUILDDIR
+LIBS += -L$$BUILDDIR -l$$ITEMFRAMEWORK_LIB
 
 macx {
     QMAKE_LFLAGS_SONAME  = -Wl,-install_name,@rpath/

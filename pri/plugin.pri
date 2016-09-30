@@ -21,7 +21,7 @@ unix:macx {
     DESTDIR      = $$BUILDDIR/traviz.app/Contents/MacOS/plugins
 }
 
-LIBS            += -L$$BUILDDIR -l$$ITEMFRAMEWORK_LIB
+LIBS             += -L$$BUILDDIR -l$$ITEMFRAMEWORK_LIB
 
 # Include and link against usercore
 USERCORE         = $$PROJECT_ROOT/usercore
@@ -29,6 +29,5 @@ USERCORE         = $$PROJECT_ROOT/usercore
 INCLUDEPATH     += \
                    $$USERCORE/include
 
-USERCORE_LIB     = usercore
 LIBS            += -L$$BUILDDIR -l$$USERCORE_LIB
 

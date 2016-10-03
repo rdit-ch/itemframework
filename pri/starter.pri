@@ -3,29 +3,21 @@ include(base.pri)
 # Set project properties
 QT          +=  core xml widgets
 CONFIG      +=  c++11
-TARGET       =  example
 TEMPLATE     =  app
 
-STARTER      = $$_PRO_FILE_PWD_$$
-USERCORE     = $$STARTER/../usercore
-INCLUDEPATH += $$ITEMFRAMEWORK_ROOT/include \
-               $$USERCORE/include
-
-# Link against itemframework and usercore
-LIBS        += -L$$BUILDDIR -l$$ITEMFRAMEWORK_LIB -l$$USERCORE_LIB
+# Link against usercore
+LIBS        += -L$$BUILDDIR -l$$USERCORE_LIB
 
 DESTDIR      = $$BUILDDIR
 
-OBJECTS_DIR  = $$STARTER/obj/
-MOC_DIR      = $$STARTER/moc/
-
 # Set Libary path to executable programm file ($ORIGIN)
 unix:!mac {
-  QMAKE_LFLAGS += -Wl,--rpath=\\\$\$ORIGIN
+  QMAKE_LFLAGS += -Wl,--rpath=\\\$\$ORIGIN -Wl,--rpath=$$ITEMFRAMEWORK_BUILDDIR
   QMAKE_LFLAGS += -lSegFault
 }
 
 macx {
-  QMAKE_RPATHDIR += $$BUILDDIR
+  QMAKE_RPATHDIR += $$BUILDDIR # or (relativ): @executable_path/../../../  (should be added by macdeployqt in theory)
+  QMAKE_RPATHDIR += $$ITEMFRAMEWORK_BUILDDIR
   QMAKE_RPATHDIR += /usr/local/lib/
 }

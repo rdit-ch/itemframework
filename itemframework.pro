@@ -150,7 +150,7 @@ HEADERS     +=  \
                 src/project/wizard_page_file_system_project_import.h \
                 src/project/export_import_helper.h \
                 src/project/wizard_page_config.h \
-    src/gui/gui_manager_p.h
+                src/gui/gui_manager_p.h
 
 
 
@@ -212,7 +212,11 @@ INCLUDEPATH +=  $$PWD/include \         #public api
                 $$PWD/src \             #private stuff
                 $$PWD/ui_header
 
-OTHER_FILES += style.astylerc
+OTHER_FILES += style.astylerc \
+               pri/base.pri \
+               pri/plugin.pri \
+               pri/starter.pri \
+               pri/usercore.pri
 
 unix:macx {
 	LIBS += -L"/usr/local/lib/"

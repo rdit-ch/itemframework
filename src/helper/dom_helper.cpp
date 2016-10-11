@@ -191,6 +191,7 @@ bool DomHelper::saveVariant(const QVariant& variant, QDomElement element,
             writeBuffer.open(QIODevice::WriteOnly);
             // Create a data stream backed up with the buffer
             QDataStream out(&writeBuffer);
+            out.setVersion(QDataStream::Qt_5_6);
 
             //Try serializing
             if (!QMetaType::save(out, variant.userType(), variant.constData())) {
@@ -200,7 +201,7 @@ bool DomHelper::saveVariant(const QVariant& variant, QDomElement element,
             }
 
             //Seek back to start
-            Q_ASSERT(writeBuffer.reset());
+            writeBuffer.reset();
 
             // Serialize the variant into the data stream
             out << variant; //will cause a SIGABRT if we try to serialize a type where QMetaType::save fails
@@ -527,9 +528,10 @@ bool DomHelper::loadVariant(QVariant& variant, const QDomElement& element)
             readBuffer.open(QIODevice::ReadOnly);
             // Create a data stream backed up with the read buffer
             QDataStream in(&readBuffer);
+            in.setVersion(QDataStream::Qt_5_6);
 
             // Deserialize and load the variant from stream
-            variant.load(in);
+            in >> variant;
 
             // Close read buffer
             readBuffer.close();

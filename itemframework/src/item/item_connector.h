@@ -24,7 +24,7 @@ public:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
     ItemOutput* get_output() const;
     ItemInput* get_input() const;
-    bool load_additional(class QDomElement& de);
+    bool load_additional(class QDomElement const & de);
     bool save_additional(class QDomDocument& doc, class QDomElement& de) const;
     void mousePressEvent(QGraphicsSceneMouseEvent* e);
     void mouseMoveEvent(QGraphicsSceneMouseEvent* e);

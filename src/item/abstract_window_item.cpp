@@ -7,6 +7,10 @@
 AbstractWindowItem::AbstractWindowItem(QString const& typeName) :
     AbstractItem(typeName), d_ptr(new AbstractWindowItemPrivate(this))
 {
+    connect(this,&AbstractItem::nameChanged,this,[this](){
+        Q_D(AbstractWindowItem);
+        d->setupWindow(); //sets the window title if window is not null
+    });
 }
 
 AbstractWindowItem::~AbstractWindowItem()

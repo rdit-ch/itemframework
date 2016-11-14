@@ -212,7 +212,7 @@ void AbstractItem::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     ungrabMouse(); //Important line! Otherwise the element will be moved after you close the context menu and draw a selection rectangle somewhere.
 
     if (actionSel == actionRemove) {
-        remove();
+        disconnectConnections();
         delete this;
     } else if (actionSel == actionRename) {
         d->showRenameDialog();
@@ -450,7 +450,20 @@ QPen AbstractItem::connectorStyle(int type)
     return Resource::get(QString("item_connector_pen%1").arg(type), QPen(Qt::black, connectorHeight()));
 }
 
-void AbstractItem::remove()
+void AbstractItem::disconnectConnections() {
+    Q_D(AbstractItem);
+    for (int i = d->_inputs.count() - 1; i >= 0; i--) {
+        ItemInput* input = d->_inputs.at(i);
+        input->disconnectOutput();
+    }
+
+    for (int i = d->_outputs.count() - 1; i >= 0; i--) {
+        ItemOutput* output = d->_outputs.at(i);
+        output->disconnectInputs();
+    }
+}
+
+AbstractItem::~AbstractItem()
 {
     Q_D(AbstractItem);
 
@@ -458,6 +471,7 @@ void AbstractItem::remove()
 
     for (int i = d->_inputs.count() - 1; i >= 0; i--) {
         ItemInput* input = d->_inputs.at(i);
+        disconnect(input,0,this,0);
         input->disconnectOutput();
         d->_inputs.removeAt(i);
         delete input;
@@ -466,6 +480,7 @@ void AbstractItem::remove()
 
     for (int i = d->_outputs.count() - 1; i >= 0; i--) {
         ItemOutput* output = d->_outputs.at(i);
+        disconnect(output,0,this,0);
         output->disconnectInputs();
         d->_outputs.removeAt(i);
         delete output;
@@ -480,11 +495,6 @@ void AbstractItem::remove()
     if (changes) {
         emit changed();
     }
-}
-
-AbstractItem::~AbstractItem()
-{
-    remove(); //Call remove() once more, in case the item was directly deleted without calling remove first
 }
 
 const QImage AbstractItem::image() const

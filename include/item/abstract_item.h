@@ -371,9 +371,9 @@ signals:
 
 public slots:
     /**
-     * @brief Removes the AbstractItem and all connections from the Scene.
+     * @brief Disconnects all connections from/to the item.
      */
-    void remove();
+    void disconnectConnections();
 
 private:
     QScopedPointer<class AbstractItemPrivate> const d_ptr;

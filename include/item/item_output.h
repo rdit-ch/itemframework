@@ -43,6 +43,8 @@ public:
     ItemOutput(AbstractItem* owner, int transportType, QString const& description,
                QRectF const& shape = {0, 0, 0, 0});
 
+    virtual ~ItemOutput();
+
     /**
      * @return true if this output is connected to at least one input, false
      * otherwise
@@ -137,7 +139,7 @@ signals:
 
 private:
     Q_DECLARE_PRIVATE(ItemOutput)
-    ItemOutputPrivate* const d_ptr;
+    QScopedPointer<ItemOutputPrivate> const d_ptr;
 };
 
 #endif // ITEM_OUTPUT_H

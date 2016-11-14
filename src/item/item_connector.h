@@ -14,6 +14,7 @@ class Item_Connector : public QGraphicsObject
 
 public:
     Item_Connector(ItemOutput* output, ItemInput* input);
+    virtual ~Item_Connector();
     QRectF boundingRect() const;
     QPainterPath shape() const;
     bool contains(const QPointF& point) const;
@@ -49,11 +50,10 @@ private:
     QList<Selpoint> lis_cur_selpoints; //all current selpoints
 
 private slots:
-    void pri_slot_check_connection();
+    void checkConnection();
     void repaint();
 
 public slots:
-    void remove_and_delete();
     void do_update();
 
 signals:

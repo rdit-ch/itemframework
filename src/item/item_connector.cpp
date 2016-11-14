@@ -24,32 +24,33 @@ Item_Connector::Item_Connector(ItemOutput* output, ItemInput* input)
     i_routing_mode = 0;
     connect(input, SIGNAL(positionChanged()), this, SLOT(do_update()));
     connect(output, SIGNAL(positionChanged()), this, SLOT(do_update()));
-    connect(input, SIGNAL(outputDisconnected()), this, SLOT(pri_slot_check_connection()));
-    connect(output, SIGNAL(inputDisconnected()), this, SLOT(pri_slot_check_connection()));
+    connect(input, SIGNAL(outputDisconnected()), this, SLOT(checkConnection()));
+    connect(output, SIGNAL(inputDisconnected()), this, SLOT(checkConnection()));
     connect(output, SIGNAL(dataChanged()), this, SLOT(repaint()));
     pen = AbstractItem::connectorStyle(input->transportType());
 }
 
-
-void Item_Connector::pri_slot_check_connection()
+Item_Connector::~Item_Connector()
 {
-    if (input->output() != output || !output->inputs().contains(input)) {
-        disconnect(input, 0, this, 0);
-        disconnect(output, 0, this, 0);
+    disconnect(input, 0, this, 0);
+    disconnect(output, 0, this, 0);
 
-        prepareGeometryChange(); //this and the following lines seem to be necessary, otherwise the scene will redraw the item after deletion..
-        ppa_selpoints = ppa_line =  QPainterPath();
-
-        scene()->removeItem(this);
-        emit changed();
-        delete this;
-    }
-}
-
-void Item_Connector::remove_and_delete()
-{
     if (input->output() == output) {
         input->disconnectOutput();
+    }
+
+    prepareGeometryChange(); //this and the following lines seem to be necessary, otherwise the scene will redraw the item after deletion..
+    ppa_selpoints = ppa_line =  QPainterPath();
+
+    scene()->removeItem(this);
+    emit changed();
+}
+
+
+void Item_Connector::checkConnection()
+{
+    if (input->output() != output || !output->inputs().contains(input)) {
+        delete this;
     }
 }
 

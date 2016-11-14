@@ -8,6 +8,7 @@ class ItemNote : public QGraphicsObject
     Q_OBJECT
 public:
     explicit ItemNote();
+    virtual ~ItemNote();
     QRectF boundingRect() const;
     QPainterPath shape() const;
     bool inEditMode() const;
@@ -37,8 +38,6 @@ private slots:
     void selectColor();
     void startEdit();
     void stopEdit();
-public slots:
-    void remove();
 signals:
     void changed();
 

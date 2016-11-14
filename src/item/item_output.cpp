@@ -9,10 +9,17 @@ ItemOutput::ItemOutput(AbstractItem* owner, int type, QString const& description
 {
 }
 
+ItemOutput::~ItemOutput()
+{
+
+}
+
 ItemOutputPrivate::ItemOutputPrivate(ItemOutput* parent) :
     q_ptr(parent)
 {
 }
+
+
 
 bool ItemOutput::isConnected() const
 {

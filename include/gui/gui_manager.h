@@ -57,6 +57,7 @@ public:
      * @return Pointer to QDockWidget. Null if nothing has been removed.
      */
     QWidget* removeWidget(QString const& name);
+
     /**
      * @brief Adds a widget to the mainwindow.
      * @param widget pointer to the widget, action that are already within a Toolbar or MenuBar are also registered whe
@@ -65,8 +66,11 @@ public:
      * @param type what type of widget it is. Note that if a widget with a type that occurs only once
      * (CentralWidget, MenuBar, StatusBar) is added, the old widget will be deleted.
      * @return true if the widget could be added
+     *
+     * Takes the ownership of the passed window
      */
     bool addWidget(QWidget* widget, QString const& name, WidgetArea area, WidgetType type = WidgetType::DockWidget);
+
     /**
      * @brief Adds a widget to the mainwindow. \n Uses the objectName or className as name. \n
      * Appends a number if a a widget is already stored with that name
@@ -75,8 +79,11 @@ public:
      * @param type what type of widget it is. Note that if a widget with a type that occurs only once
      * (CentralWidget, MenuBar, StatusBar) is added, the old widget will be deleted.
      * @return name under which the widget was added, is empty when the widget couldn't be added
+     *
+     * * Takes the ownership of the passed window
      */
     QString addWidget(QWidget* widget, WidgetArea area, WidgetType type = WidgetType::DockWidget);
+
     /**
      * @brief moveWidget change the position of a widget
      * @param name name of the widget that should be moved
@@ -84,21 +91,25 @@ public:
      * @return true if the action was successful
      */
     bool moveWidget(QString const& name, WidgetArea area);
+
     /**
      * @brief setVisible changes the visibility of a widget
      * @param name name of the widget
      * @param visible value that the visibility is set to
      */
     void setVisible(QString const& name, bool visible);
+
     /**
      * @brief showMainWindow makes tha main window visible
      */
     void showMainWindow();
+
     /**
      * @brief widgetReference method to access the main window
      * @return  refrence to the mainwindow
      */
     QWidget* widgetReference();
+
     /**
      * @brief  adds an action a menu or a toolbar
      * @param Action The action that is added, GuiManager doesn't takes ownership, can't be NULL
@@ -108,6 +119,7 @@ public:
      * @return True when the action could be added
      */
     bool addAction(QAction* action, QString const& name, QString const& parent);
+
     /**
      * @brief Adds the action name to the action or widget parent
      * @param name Name of the action or widget, must be an action
@@ -116,6 +128,7 @@ public:
      * @return True when the action could be added to parent
      */
     bool addActionToParent(QString const& name, QString const& parent);
+
     /**
      * @brief Adds an action to a menu or a toolbar \n Uses the objectName or className as name. \n
      * Appends a number if something is already stored with that name
@@ -125,12 +138,14 @@ public:
      * @return name under which the action was added, is empty when the widget couldn't be added
      */
     QString addAction(QAction* action, QString const& parent);
+
     /**
      * @brief Access to reference of an action
      * @param name Name of the action
      * @return Reference to the action, NULL when it doesn't exist
      */
     QAction* action(QString const& name) const;
+
     /**
      * @brief Removes an action from the gui and returns it.
      * @param name name of the action
@@ -138,6 +153,7 @@ public:
      * @return removed action, NULL when name or parent doesn't exist
      */
     QAction* removeAction(QString const& name, QString const& parent = QString());
+
     /**
      * @brief This callback will be executed by an application close event.
      * If the callback returns true the close process will be continue -> shutdown application.
@@ -145,34 +161,40 @@ public:
      * @param std::function<bool> callback
      */
     void registerCloseHandler(std::function<bool()> callback);
+
     /**
      * @brief Access to the names of the parents of an registered action
      * @param name Name of the action
      * @return List of the names of all parents of name
      */
     QStringList parents(QString const& name);
+
     /**
      * @brief Access to the names of the children of an registered action or widget
      * @param name Name of the action or widget
      * @return List of the names of all children of name
      */
     QStringList children(QString const& name) const;
+
     /**
      * @brief Access to all the names of the registered actions
      * @return List containing all names of the registered actions
      */
     QStringList registeredActions()const;
+
     /**
      * @brief Access to all the names of the registered widgets
      * @return List containing all names of the registered widgets
      */
     QStringList registeredWidgets() const;
+
     /**
      * @brief registeredWidgets return all registered widgets of the given type
      * @param type Type to be returned
      * @return Names of widgets
      */
     QStringList registeredWidgets(WidgetType type) const;
+
     /**
      * @brief mainWindowIsActive
      * @return State of the main window

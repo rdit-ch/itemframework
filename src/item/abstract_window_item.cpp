@@ -145,6 +145,7 @@ void AbstractWindowItem::openWindow()
             d->_window->show();
         } else {
             d->_window->activateWindow();
+            d->_window->raise();
         }
     }
 }

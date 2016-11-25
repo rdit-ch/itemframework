@@ -29,6 +29,11 @@ enum class WidgetArea {
 
 };
 
+enum class GuiMode {
+    ShowGui = 0, ///< Show GUI (default)
+    Headless     ///< Do not show GUI. Useful for non-interactive usage, e.g. in tests.
+};
+
 /**
  * @brief The GuiManager class handels widgets and actions on the main window
  */
@@ -50,6 +55,11 @@ protected:
     //------------------End Singleton Stuff---------------------------
 
 public:
+    /**
+     * @brief Sets the GUI mode to \p mode
+     * @param mode The new GUI mode to use
+     */
+    void setMode(GuiMode mode);
     /**
      * @brief removeFromLayout removes widget from the GUI.
      * Caller takes ownership of the widget
@@ -90,10 +100,6 @@ public:
      * @param visible value that the visibility is set to
      */
     void setVisible(QString const& name, bool visible);
-    /**
-     * @brief showMainWindow makes tha main window visible
-     */
-    void showMainWindow();
     /**
      * @brief widgetReference method to access the main window
      * @return  refrence to the mainwindow

@@ -4,11 +4,13 @@
 #include <QGraphicsScene>
 #include <QDomDocument>
 
+#include "appcore.h"
+
 class ProjectGui;
 class ItemOutput;
 class ItemInput;
 
-class ItemScene : public QGraphicsScene
+class ITEMFRAMEWORK_TEST_EXPORT ItemScene : public QGraphicsScene
 {
     Q_OBJECT
 

@@ -5,10 +5,12 @@
 #include <QObject>
 #include <QPen>
 
+#include "appcore.h"
+
 class ItemInput;
 class ItemOutput;
 
-class Item_Connector : public QGraphicsObject
+class ITEMFRAMEWORK_TEST_EXPORT Item_Connector : public QGraphicsObject
 {
     Q_OBJECT
 

@@ -3,7 +3,9 @@
 
 #include <QGraphicsObject>
 
-class ItemNote : public QGraphicsObject
+#include "appcore.h"
+
+class ITEMFRAMEWORK_TEST_EXPORT ItemNote : public QGraphicsObject
 {
     Q_OBJECT
 public:

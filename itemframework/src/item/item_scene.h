@@ -109,11 +109,12 @@ signals:
     void sceneRealChanged();
     void loadingProgress(const int progress, const QString& loadcomment = "", const QString& loadinfo = "Loading Project");
 
-private:
+public:
     bool saveToXml(QDomDocument& document, QDomElement& xml, QList<QGraphicsItem const*> itms) const;
     bool loadFromXml(QDomElement& dom, QList<QGraphicsItem*>* itemsOut,
                      bool shouldReportProgress, bool shouldConnectIO = true);
 
+private:
     bool notesInInsertMode();
     void deleteItems(QList<QGraphicsItem*> items);
     void insertItem(QString const& name, QPointF const& position);
@@ -127,12 +128,12 @@ private:
 
     void paintItem(QGraphicsItem* item, QPainter& painter, QStyleOptionGraphicsItem& options) const;
 
-    QRectF calculateBoundingBox(QList<QGraphicsItem const*> items, bool ignoreConnectors = false) const;
-    QList<QGraphicsItem*> readItems(QDomDocument const& document, bool shouldConnectIO = true);
-    QList<QGraphicsItem*> readItems(class QMimeData const& mimeData, char const* const mimeType, char const* const docType);
+    QRectF                  calculateBoundingBox(QList<QGraphicsItem const*> items, bool ignoreConnectors = false) const;
+    QList<QGraphicsItem*>   readItems(QDomDocument const& document, bool shouldConnectIO = true);
+    QList<QGraphicsItem*>   readItems(class QMimeData const& mimeData, char const* const mimeType, char const* const docType);
 
-    void insertItems(QList<QGraphicsItem*> items, const QPointF& scenePos, const QRectF& boundingBox);
-    void insertTemplate(class QMimeData const* const mimeData, QPointF const& position = {});
+    void                    insertItems(QList<QGraphicsItem*> items, const QPointF& scenePos, const QRectF& boundingBox);
+    void                    insertTemplate(class QMimeData const* const mimeData, QPointF const& position = {});
 
     QHash<QString, int> _copyCountHash;
     QSharedPointer<ProjectGui> _projectGui;

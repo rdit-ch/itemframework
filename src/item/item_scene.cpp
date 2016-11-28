@@ -462,7 +462,7 @@ void ItemScene::deleteItems(QList<QGraphicsItem*> items)
         Item_Connector* con = qobject_cast<Item_Connector*>(items.at(i)->toGraphicsObject());
 
         if (con != nullptr) {
-            con->remove_and_delete();
+            delete con;
             items.removeAt(i);
         }
     }
@@ -473,14 +473,13 @@ void ItemScene::deleteItems(QList<QGraphicsItem*> items)
         AbstractItem* it = qobject_cast<AbstractItem*>(item);
 
         if (it != nullptr) {
-            it->remove();
+            it->disconnectConnections();
             delete it;
         } else {
             ItemNote* itn = qobject_cast<ItemNote*>(item);
 
             if (itn != nullptr) {
-                itn->remove();
-                delete it;
+                delete itn;
             }
         }
     }

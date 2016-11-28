@@ -29,6 +29,7 @@ Livedoc::Livedoc()
 
 Livedoc::~Livedoc()
 {
+    qDeleteAll(lis_providers.begin(), lis_providers.end());
 }
 
 bool Livedoc::postInit()

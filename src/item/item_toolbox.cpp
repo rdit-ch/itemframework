@@ -14,7 +14,7 @@ Item_Toolbox::Item_Toolbox(QWidget* parent) :
     ui(new Ui::Graphics_Item_Toolbox)
 {
     ui->setupUi(this);
-    model = new Item_List_Model(parent);
+    model = new Item_List_Model(parent==nullptr?this:parent);
     ui->treeView->setModel(model);
 }
 

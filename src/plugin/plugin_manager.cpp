@@ -44,7 +44,7 @@ public:
 //*****************************************************************************
 // class PluginManagerPrivate
 //*****************************************************************************
-PluginManagerPrivate::PluginManagerPrivate(PluginManager*)
+PluginManagerPrivate::PluginManagerPrivate(PluginManager* parent) : QObject(parent)
 {
     qDebug() << "API VERSION: " << ApiVersion;
 

@@ -15,7 +15,7 @@ class PluginManagerPrivate : public QObject
 
 public:
 
-    explicit PluginManagerPrivate(PluginManager* = nullptr);
+    explicit PluginManagerPrivate(PluginManager* parent = nullptr);
 
     bool loadPlugins();
     QString const& lastError();

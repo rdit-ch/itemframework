@@ -452,13 +452,10 @@ QPen AbstractItem::connectorStyle(int type)
 
 void AbstractItem::disconnectConnections() {
     Q_D(AbstractItem);
-    for (int i = d->_inputs.count() - 1; i >= 0; i--) {
-        ItemInput* input = d->_inputs.at(i);
+    for(ItemInput* input : d->_inputs) {
         input->disconnectOutput();
     }
-
-    for (int i = d->_outputs.count() - 1; i >= 0; i--) {
-        ItemOutput* output = d->_outputs.at(i);
+    for(ItemOutput* output: d->_outputs) {
         output->disconnectInputs();
     }
 }
@@ -469,20 +466,22 @@ AbstractItem::~AbstractItem()
 
     bool changes = false;
 
-    for (int i = d->_inputs.count() - 1; i >= 0; i--) {
-        ItemInput* input = d->_inputs.at(i);
+    QMutableListIterator<ItemInput*> it_inp(d->_inputs);
+    while(it_inp.hasNext()) {
+        ItemInput* input = it_inp.next();
         disconnect(input,0,this,0);
         input->disconnectOutput();
-        d->_inputs.removeAt(i);
+        it_inp.remove();
         delete input;
         changes = true;
     }
 
-    for (int i = d->_outputs.count() - 1; i >= 0; i--) {
-        ItemOutput* output = d->_outputs.at(i);
+    QMutableListIterator<ItemOutput*> it_out(d->_outputs);
+    while(it_out.hasNext()) {
+        ItemOutput* output = it_out.next();
         disconnect(output,0,this,0);
         output->disconnectInputs();
-        d->_outputs.removeAt(i);
+        it_out.remove();
         delete output;
         changes = true;
     }

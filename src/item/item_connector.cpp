@@ -49,7 +49,7 @@ Item_Connector::~Item_Connector()
 
 void Item_Connector::checkConnection()
 {
-    if (input->output() != output || !output->inputs().contains(input)) {
+    if (! (input->output() == output && output->inputs().contains(input))) {
         delete this;
     }
 }

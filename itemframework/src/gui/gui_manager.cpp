@@ -72,20 +72,47 @@ GuiManager::~GuiManager()
 bool GuiManager::postInit()
 {
     Q_D(GuiManager);
-    ProjectManager* projectManager = ProjectManagerGui::instance()->projectManager();
-    connect(projectManager, &ProjectManager::workspaceChanged, d, &GuiManagerPrivate::loadState);
-    showMainWindow();
-    d->_mainWindow->setDisabled(true);
-
-    if (!ProjectManagerGui::instance()->start()) {
-        d->_mainWindow->close();
-    }
-
-    d->_mainWindow->setDisabled(false);
-
-    d->loadState();
+    d->connectProjectManager();
+    d->setupGui();
     d->_initialized = true;
     return true;
+}
+
+void GuiManager::setMode(GuiMode mode)
+{
+    Q_D(GuiManager);
+    d->_mode = mode;
+}
+
+void GuiManagerPrivate::connectProjectManager()
+{
+    ProjectManager* projectManager = ProjectManagerGui::instance()->projectManager();
+    connect(projectManager, &ProjectManager::workspaceChanged,
+            this, &GuiManagerPrivate::loadMainWindowState);
+}
+
+void GuiManagerPrivate::setupGui()
+{
+    if (_mode == GuiMode::Headless) {
+        QApplication::exit();
+    }
+
+    _mainWindow->setGeometry(QStyle::alignedRect(
+                                    Qt::LeftToRight,
+                                    Qt::AlignCenter,
+                                    _mainWindow->size(),
+                                    qApp->desktop()->availableGeometry()));
+
+    _mainWindow->show();
+    _mainWindow->setDisabled(true);
+
+    if (!ProjectManagerGui::instance()->start()) {
+        _mainWindow->close();
+    }
+
+    _mainWindow->setDisabled(false);
+
+    loadMainWindowState();
 }
 
 bool GuiManager::preDestroy()
@@ -136,7 +163,7 @@ void GuiManagerPrivate::saveState()
     }
 }
 
-void GuiManagerPrivate::loadState()
+void GuiManagerPrivate::loadMainWindowState()
 {
     ProjectManager* projectManager = ProjectManagerGui::instance()->projectManager();
 
@@ -676,19 +703,6 @@ QWidget* GuiManager::removeWidget(QString const& name)
 
     return widget;
 }
-
-void GuiManager::showMainWindow()
-{
-    Q_D(GuiManager);
-    d->_mainWindow->setGeometry(QStyle::alignedRect(
-                                    Qt::LeftToRight,
-                                    Qt::AlignCenter,
-                                    d->_mainWindow->size(),
-                                    qApp->desktop()->availableGeometry()));
-    d->_mainWindow->show();
-    //showMaximized causes problems with awesome-wm.
-}
-
 
 QWidget* GuiManager::widgetReference()
 {

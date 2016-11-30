@@ -26,13 +26,13 @@ public:
     GuiManager* const q_ptr;
     Q_DECLARE_PUBLIC(GuiManager)
 
-    QMainWindow* _mainWindow;
-
-    QList<std::function<bool()>> _closeApplicationCallbacks;
-    class GuiPluginManager* _uiPluginManager;
-    QHash<QString, Widget> _widgets;
-    QHash<QString, Action> _actions;
-    bool _initialized = false;
+    QMainWindow*                    _mainWindow;
+    QList<std::function<bool()>>    _closeApplicationCallbacks;
+    class GuiPluginManager*         _uiPluginManager;
+    QHash<QString, Widget>          _widgets;
+    QHash<QString, Action>          _actions;
+    bool                            _initialized = false;
+    GuiMode                         _mode        = GuiMode::ShowGui;
 
     static bool isType(QWidget* widget, WidgetType type, QString const& name);
     bool nameUsed(QString const& name);
@@ -52,9 +52,11 @@ public:
      */
     void unregisterAction(QString const& name, QString const& parent);
     void unregisterActions(QStringList const& list);
+    void setupGui();
+    void connectProjectManager();
 public slots:
     void saveState();
-    void loadState();
+    void loadMainWindowState();
 
 protected:
     bool eventFilter(QObject*, QEvent*);

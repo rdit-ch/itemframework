@@ -6,6 +6,7 @@
 
 #include <QObject>
 #include <QRectF>
+#include <QScopedPointer>
 
 class AbstractItem;
 class ItemOutput;
@@ -40,6 +41,8 @@ public:
      */
     ItemInput(AbstractItem* owner, int transportType, QString const& description,
               QRectF const& shape = {0, 0, 0, 0});
+
+    virtual ~ItemInput();
 
     /**
      * @return true if this input is connected to an output, false otherwise
@@ -109,7 +112,7 @@ signals:
     void dataChanged();
 
 private:
-    ItemInputPrivate* const d_ptr;
+    QScopedPointer<ItemInputPrivate> const d_ptr;
     Q_DECLARE_PRIVATE(ItemInput)
 };
 

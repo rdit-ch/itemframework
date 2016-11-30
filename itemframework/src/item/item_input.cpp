@@ -9,6 +9,10 @@ ItemInput::ItemInput(AbstractItem* owner, int type, QString const& description, 
 {
 }
 
+ItemInput::~ItemInput()
+{
+}
+
 ItemInputPrivate::ItemInputPrivate(ItemInput* parent) :
     q_ptr(parent)
 {

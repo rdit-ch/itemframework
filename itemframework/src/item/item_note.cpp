@@ -34,6 +34,12 @@ ItemNote::ItemNote() : QGraphicsObject()
     connect(_textItem->document(), SIGNAL(contentsChanged()), this, SLOT(updateSize()));
 }
 
+ItemNote::~ItemNote()
+{
+    scene()->removeItem(this);
+    emit changed();
+}
+
 QVariant ItemNote::itemChange(GraphicsItemChange change, QVariant const& value)
 {
     if (change == QGraphicsItem::ItemSelectedHasChanged) {
@@ -144,12 +150,6 @@ void ItemNote::updateSize()
     emit changed();
 }
 
-void ItemNote::remove()
-{
-    emit changed();
-    scene()->removeItem(this);
-}
-
 QRectF ItemNote::boundingRect() const
 {
     return _boundingRect;
@@ -234,7 +234,7 @@ void ItemNote::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     ungrabMouse(); //Important line! Otherwise the element will be moved after you close the context menu and draw a selection rectangle somewhere.
 
     if (sel_action == act_remove) {
-        remove();
+        delete this;
     } else if (sel_action == act_edit) {
         setSelected(true);
         startEdit();

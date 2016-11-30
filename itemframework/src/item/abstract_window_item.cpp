@@ -7,6 +7,10 @@
 AbstractWindowItem::AbstractWindowItem(QString const& typeName) :
     AbstractItem(typeName), d_ptr(new AbstractWindowItemPrivate(this))
 {
+    Q_D(AbstractWindowItem);
+    connect(this,&AbstractItem::nameChanged,this,[d](){
+        d->setupWindow(); //sets the window title if window is not null
+    });
 }
 
 AbstractWindowItem::~AbstractWindowItem()
@@ -145,6 +149,7 @@ void AbstractWindowItem::openWindow()
             d->_window->show();
         } else {
             d->_window->activateWindow();
+            d->_window->raise();
         }
     }
 }

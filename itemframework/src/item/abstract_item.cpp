@@ -212,7 +212,7 @@ void AbstractItem::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     ungrabMouse(); //Important line! Otherwise the element will be moved after you close the context menu and draw a selection rectangle somewhere.
 
     if (actionSel == actionRemove) {
-        remove();
+        disconnectConnections();
         delete this;
     } else if (actionSel == actionRename) {
         d->showRenameDialog();
@@ -450,24 +450,38 @@ QPen AbstractItem::connectorStyle(int type)
     return Resource::get(QString("item_connector_pen%1").arg(type), QPen(Qt::black, connectorHeight()));
 }
 
-void AbstractItem::remove()
+void AbstractItem::disconnectConnections() {
+    Q_D(AbstractItem);
+    for(ItemInput* input : d->_inputs) {
+        input->disconnectOutput();
+    }
+    for(ItemOutput* output: d->_outputs) {
+        output->disconnectInputs();
+    }
+}
+
+AbstractItem::~AbstractItem()
 {
     Q_D(AbstractItem);
 
     bool changes = false;
 
-    for (int i = d->_inputs.count() - 1; i >= 0; i--) {
-        ItemInput* input = d->_inputs.at(i);
+    QMutableListIterator<ItemInput*> it_inp(d->_inputs);
+    while(it_inp.hasNext()) {
+        ItemInput* input = it_inp.next();
+        disconnect(input,0,this,0);
         input->disconnectOutput();
-        d->_inputs.removeAt(i);
+        it_inp.remove();
         delete input;
         changes = true;
     }
 
-    for (int i = d->_outputs.count() - 1; i >= 0; i--) {
-        ItemOutput* output = d->_outputs.at(i);
+    QMutableListIterator<ItemOutput*> it_out(d->_outputs);
+    while(it_out.hasNext()) {
+        ItemOutput* output = it_out.next();
+        disconnect(output,0,this,0);
         output->disconnectInputs();
-        d->_outputs.removeAt(i);
+        it_out.remove();
         delete output;
         changes = true;
     }
@@ -480,11 +494,6 @@ void AbstractItem::remove()
     if (changes) {
         emit changed();
     }
-}
-
-AbstractItem::~AbstractItem()
-{
-    remove(); //Call remove() once more, in case the item was directly deleted without calling remove first
 }
 
 const QImage AbstractItem::image() const

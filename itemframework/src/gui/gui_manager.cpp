@@ -530,6 +530,8 @@ bool GuiManager::addWidget(QWidget* widget, QString const& name, WidgetArea area
         return false;
     }
 
+    widget->setParent(d->_mainWindow);
+
     switch (type) {
     case WidgetType::DockWidget: {
 

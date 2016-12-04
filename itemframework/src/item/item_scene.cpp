@@ -906,6 +906,16 @@ bool ItemScene::loadFromXml(QDomElement& items, QList<QGraphicsItem*>* itemsOut,
     auto extractConnector = [this, shouldConnectIO](QDomElement const& element,
             QHash<qint32, AbstractItem*> const& itemIds) -> Item_Connector* {
 
+        auto interval = [](int const low, int const high) {
+            return std::make_pair(low, high);
+        };
+
+        auto contains = [](std::pair<int, int> const& interval, int const value) {
+            auto const low  = interval.first;
+            auto const high = interval.second;
+            return value >= low && value < high;
+        };
+
         auto loadConnector = [this](QDomElement const& element, ItemInput* input, ItemOutput* output) {
             auto connector = new Item_Connector(output, input);
             connector->load_additional(element); // Load user modified path or custom routing
@@ -936,12 +946,12 @@ bool ItemScene::loadFromXml(QDomElement& items, QList<QGraphicsItem*>* itemsOut,
         auto const outputs = sourceItem->outputs();
         auto const inputs  = destinationItem->inputs();
 
-        if (sourceOutputIndex < 0 || sourceOutputIndex > outputs.count() - 1) {
+        if (!contains(sourceOutputIndex, interval(0, outputs.count()))) {
             qCritical() << QString("Couldn't find ouput for connector on item %1. Connector deleted.").arg(sourceItem->name());
             return nullptr;
         }
 
-        if (destinationInputIndex < 0 || destinationInputIndex > inputs.count() - 1) {
+        if (!contains(destinationInputIndex, interval(0, inputs.count()))) {
             qCritical() << QString("Couldn't find input for connector on item %1. Connector deleted.").arg(destinationItem->name());
             return nullptr;
         }

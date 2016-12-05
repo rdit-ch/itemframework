@@ -894,7 +894,7 @@ bool ItemScene::loadFromXml(QDomElement& items, QList<QGraphicsItem*>* itemsOut,
         QString const name = element.attribute(NameAttrTag);
         qreal   const x    = element.attribute(XPosAttrTag).toDouble();
         qreal   const y    = element.attribute(YPosAttrTag).toDouble();
-        qint32  const id   = element.attribute(IdAttrTag).toUInt();
+        qint32  const id   = element.attribute(IdAttrTag).toInt();
 
         itemPtr->setPos(x, y);
         itemPtr->setName(name);
@@ -946,12 +946,12 @@ bool ItemScene::loadFromXml(QDomElement& items, QList<QGraphicsItem*>* itemsOut,
         auto const outputs = sourceItem->outputs();
         auto const inputs  = destinationItem->inputs();
 
-        if (!contains(sourceOutputIndex, interval(0, outputs.count()))) {
+        if (!contains(interval(0, outputs.count()), sourceOutputIndex)) {
             qCritical() << QString("Couldn't find ouput for connector on item %1. Connector deleted.").arg(sourceItem->name());
             return nullptr;
         }
 
-        if (!contains(destinationInputIndex, interval(0, inputs.count()))) {
+        if (!contains(interval(0, inputs.count()), destinationInputIndex)) {
             qCritical() << QString("Couldn't find input for connector on item %1. Connector deleted.").arg(destinationItem->name());
             return nullptr;
         }
@@ -1062,7 +1062,7 @@ bool ItemScene::loadFromXml(QDomElement& items, QList<QGraphicsItem*>* itemsOut,
     };
 
     for (QDomNode node = items.firstChild(); !node.isNull(); node = node.nextSibling()) {
-        QDomElement element = node.toElement();
+        QDomElement const element = node.toElement();
 
         if (element.isNull()) {
             continue;

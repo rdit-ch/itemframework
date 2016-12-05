@@ -7,8 +7,9 @@
 #include <QString>
 #include <QScopedPointer>
 
-struct ITEMFRAMEWORK_EXPORT ProgressReporter
+class ITEMFRAMEWORK_EXPORT ProgressReporter
 {
+public:
     using ReportingFunction = std::function<void(int, QString const&)>;
 
     explicit ProgressReporter(ReportingFunction reporter, int goal, int start = 0, bool enabled = true);

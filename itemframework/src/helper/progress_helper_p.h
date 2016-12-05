@@ -3,8 +3,9 @@
 
 #include "helper/progress_helper.h"
 
-struct ProgressReporterPrivate
+class ProgressReporterPrivate
 {
+public:
     explicit ProgressReporterPrivate(ProgressReporter::ReportingFunction f, int goal,
                                      int start = 0, bool enabled = true);
     int progress() const;

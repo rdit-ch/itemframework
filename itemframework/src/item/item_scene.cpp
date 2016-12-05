@@ -874,7 +874,7 @@ bool ItemScene::loadFromXml(QDomElement& items, QList<QGraphicsItem*>* itemsOut,
         return count;
     };
 
-    auto extractGraphicsItem = [this](QDomElement const& element)
+    auto extractAbstractItem = [this](QDomElement const& element)
             -> std::pair<AbstractItem*, quint32> {
         QString const type = element.attribute(TypeAttrTag);
         QScopedPointer<AbstractItem> itemPtr{
@@ -1017,9 +1017,9 @@ bool ItemScene::loadFromXml(QDomElement& items, QList<QGraphicsItem*>* itemsOut,
 
     // since itemsOut is a pointer, it could also be captured by value, but we
     // want to express that it is written to.
-    auto extractItem = [&itemIds, &itemsOut,
-                        extractGraphicsItem,
-                        extractConnector, extractNote]
+    auto extractGraphicsItem = [&itemIds, &itemsOut,
+                                extractAbstractItem,
+                                extractConnector, extractNote]
             (QDomElement const& element, ProgressReporter& progress) {
         auto const tagName = element.tagName();
 
@@ -1028,7 +1028,7 @@ bool ItemScene::loadFromXml(QDomElement& items, QList<QGraphicsItem*>* itemsOut,
             progress.report("Loading graphics item ...");
             AbstractItem *item;
             qint32 id;
-            std::tie(item, id) = extractGraphicsItem(element);
+            std::tie(item, id) = extractAbstractItem(element);
             if (item != nullptr) {
                 itemsOut->append(item);
                 itemIds.insert(id, item);
@@ -1068,7 +1068,7 @@ bool ItemScene::loadFromXml(QDomElement& items, QList<QGraphicsItem*>* itemsOut,
             continue;
         }
 
-        if (!extractItem(element, progress)) {
+        if (!extractGraphicsItem(element, progress)) {
             qWarning() << "Failed to load item from element tagged " << element.tagName();
         }
     }

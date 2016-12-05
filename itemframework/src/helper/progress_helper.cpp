@@ -14,53 +14,53 @@ ProgressReporter::~ProgressReporter()
 
 ProgressReporterPrivate::ProgressReporterPrivate(ProgressReporter::ReportingFunction reporter,
                                                  int goal, int start, bool enabled)
-    : reporter_{reporter}, goal_{goal}, current_{start}, enabled_{enabled}
+    : _reporter{reporter}, _goal{goal}, _current{start}, _enabled{enabled}
 {}
 
 int ProgressReporter::current() const
 {
     Q_D(const ProgressReporter);
 
-    return d->current_;
+    return d->_current;
 }
 
 int ProgressReporter::goal() const
 {
     Q_D(const ProgressReporter);
 
-    return d->goal_;
+    return d->_goal;
 }
 
 void ProgressReporter::advance()
 {
     Q_D(ProgressReporter);
 
-    if (d->current_ >= d->goal_) {
+    if (d->_current >= d->_goal) {
         return;
     }
 
-    d->current_++;
+    d->_current++;
 }
 
 void ProgressReporter::done()
 {
     Q_D(ProgressReporter);
 
-    d->current_ = d->goal_;
+    d->_current = d->_goal;
 }
 
 void ProgressReporter::report(QString const& message)
 {
     Q_D(ProgressReporter);
 
-    if (!d->enabled_) {
+    if (!d->_enabled) {
         return;
     }
 
-    d->reporter_(d->progress(), message);
+    d->_reporter(d->progress(), message);
 }
 
 int ProgressReporterPrivate::progress() const
 {
-    return current_ * 100 / goal_;
+    return _current * 100 / _goal;
 }

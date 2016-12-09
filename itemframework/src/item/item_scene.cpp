@@ -1,4 +1,5 @@
 #include "item_scene.h"
+#include "helper/progress_helper.h"
 
 #include <QGraphicsSceneMouseEvent>
 #include <QKeyEvent>
@@ -31,8 +32,8 @@
 #include "gui/gui_manager.h"
 #include "helper/settings_scope.h"
 
-#define RASTER 50.0 //Raster to 50px
-#define AUTOCONNECT_DISTANCE  30 //connect line if nearer than 10px
+#define RASTER 50.0 // [px]
+#define AUTOCONNECT_DISTANCE  30 // [px]
 
 static const char* const DragDropMimeType = "application/x-itemframework-item";
 static const char* const CopyPasteMimeType = "application/x-itemframework-items";
@@ -821,184 +822,259 @@ bool ItemScene::loadFromXml(QDomElement& dom)
     }
 }
 
-bool ItemScene::loadFromXml(QDomElement& dom, QList<QGraphicsItem*>* itemsOut, bool reportProgress, bool shouldConnectIO)
+// This is a template because even though ItemNote has a similar interface to
+// the common AbstractItem base class, it does not inherit from it, so
+// polymorphism does not work.
+// In particular, both classes implement load(QDomElement const&), which we use
+// here.
+template <typename T>
+bool loadItemData(QDomElement const& element, T* item, char const* const tag)
+{
+    if (element.hasChildNodes()) {
+        QDomElement dataElement  = element.firstChild().toElement();
+
+        if (dataElement.isNull()) {
+            qDebug() << "Item has non element subtype";
+            return false;
+        }
+
+        if (dataElement.tagName() != tag) {
+            qDebug() << "Unknown subelementtype for Item";
+            return false;
+        }
+
+        if (!item->load(dataElement)) {
+            qWarning() << "Couldn't load item data. (Wrong version?)";
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool ItemScene::loadFromXml(QDomElement& items, QList<QGraphicsItem*>* itemsOut,
+                            bool shouldReportProgress, bool shouldConnectIO)
 {
     if (itemsOut == nullptr) {
         return false;
     }
 
-    int progress = 0;
-    int childs = 0;
-    int actchild = 0;
-
-    QDomNode n = dom.firstChild();
-
-    if (n.isNull()) {
+    if (items.childNodes().size() == 0) {
         return true;
     }
 
-    //count all GraphicsItem
-    while (!n.isNull()) {
-        if (n.toElement().tagName() == GraphicsItemTag || n.toElement().tagName() == GraphicsItemNoteTag) {
-            childs++;
-        }
-
-        n = n.nextSibling();
-    }
-
-    if (reportProgress) {
-        emit loadingProgress(progress);
-    }
-
-    n = dom.firstChild();
-
-    QHash<qint32, AbstractItem*> idMap;
-
-    while (!n.isNull()) {
-        progress = actchild * 100 / childs;
-
-        QDomElement e = n.toElement();
-
-        if (!e.isNull()) {
-            if (e.tagName() == GraphicsItemTag) {
-                QString const type = e.attribute(TypeAttrTag);
-
-                if (reportProgress)  {
-                    emit loadingProgress(progress, "Loading " + type); //show the exact name of what is currently loading
-                }
-
-                actchild++;
-                AbstractItem* newItem = PluginManager::instance()->createInstance<AbstractItem>(type);
-
-                if (newItem == nullptr) {
-                    qDebug() << "Couldn't cast Item to" << type;
-                    qDebug() << "Wrong version of Plugin?";
-                    return false;
-                }
-
-                if (e.hasChildNodes()) {
-                    QDomElement se  = e.firstChild().toElement();
-
-                    if (se.isNull()) {
-                        qDebug() << "Item has non element subtype";
-                        return false;
-                    }
-
-                    if (se.tagName() == GraphicsItemDataTag) {
-                        if (!newItem->load(se)) {
-                            qWarning() << type << "Couldn't load it's data. (Wrong version?)";
-                        }
-                    } else {
-                        qDebug() << "Unknown subelementtype for Item";
-                        return false;
-                    }
-                }
-
-                itemsOut->append(newItem);
-                QString name = e.attribute(NameAttrTag);
-                qreal x = e.attribute(XPosAttrTag).toDouble();
-                qreal y = e.attribute(YPosAttrTag).toDouble();
-                qint32 id = e.attribute(IdAttrTag).toUInt();
-                newItem->setPos(x, y);
-                newItem->setName(name);
-                connect(newItem, SIGNAL(changed()), this, SIGNAL(sceneRealChanged()));
-                idMap.insert(id, newItem);
-            } else if (e.tagName() == GraphicsItemConnectorTag) {
-                if (reportProgress) {
-                    emit loadingProgress(progress, "Loading connections");
-                }
-
-                qint32 fromObj = e.attribute(FromItemAttrTag).toInt();
-                qint32 fromInd = e.attribute(FromIndexAttrTag).toInt();
-                qint32 toObj = e.attribute(ToItemAttrTag).toInt();
-                qint32 toInd = e.attribute(ToIndexAttrTag).toInt();
-                QString typeName = e.attribute(TransportTypeAttrTag);
-                qint32 typeId = QMetaType::type(typeName.toStdString().c_str());
-
-                if (!idMap.contains(fromObj) || !idMap.contains(toObj)) {
-                    qCritical() << "Couldn't find begin and end object of connector. Connector deleted.";
-                } else if (typeId == QMetaType::UnknownType) {
-                    qCritical() << "Unknown transport type \"" << typeName << "\"! Connector deleted.";
-                } else {
-                    AbstractItem* fromItem = idMap[fromObj];
-                    AbstractItem* toItem = idMap[toObj];
-                    const QList<ItemOutput*> outputs = fromItem->outputs();
-                    const QList<ItemInput*> inputs = toItem->inputs();
-
-                    if (fromInd < 0 || fromInd > outputs.count() - 1) {
-                        qCritical() << QString("Couldn't find ouput for connector on item %1. Connector deleted.").arg(fromItem->name());
-                    } else  if (toInd < 0 || toInd > inputs.count() - 1) {
-                        qCritical() << QString("Couldn't find input for connector on item %1. Connector deleted.").arg(toItem->name());
-                    } else {
-                        ItemInput* input = inputs.at(toInd);
-                        ItemOutput* output = outputs.at(fromInd);
-
-                        if (input->transportType() != typeId) {
-                            qCritical() << QString("Connector Type is %1. Input of Item %2 is of Type %3. Connector deleted.").arg(typeId).arg(toItem->name()).arg(input->transportType());
-                        } else if (output->transportType() != typeId) {
-                            qCritical() << QString("Connector Type is %1. Output of Item %2 is of Type %3. Connector deleted.").arg(typeId).arg(fromItem->name()).arg(output->transportType());
-                        } else {
-                            // Disable signals if we're only loading these
-                            // items in order to create a pixmap image.
-                            //
-                            // Simply not connecting the input and output
-                            // would not work since their appearance depends
-                            // on whether or not they are connected.
-                            if (!shouldConnectIO) {
-                                input->blockSignals(true);
-                                output->blockSignals(true);
-                            }
-                            input->connectOutput(output); //data connection
-
-                            Item_Connector* connector = new Item_Connector(output, input); //graphical connection
-                            connector->load_additional(e); //load user modified path or custom routing
-                            connector->do_update();
-                            itemsOut->append(connector);
-                            connect(connector, SIGNAL(changed()), this, SIGNAL(sceneRealChanged()));
-                        }
-                    }
-                }
-            } else if (e.tagName() == GraphicsItemNoteTag) {
-                if (reportProgress) {
-                    emit loadingProgress(progress, "Loading notes");
-                }
-
-                actchild++;
-
-                qreal x = e.attribute(XPosAttrTag).toDouble();
-                qreal y = e.attribute(YPosAttrTag).toDouble();
-                ItemNote* note = new ItemNote();
-                note->setPos(x, y);
-
-                if (e.hasChildNodes()) {
-                    QDomElement se  = e.firstChild().toElement();
-
-                    if (se.isNull()) {
-                        qDebug() << "ItemNote has non element subtype";
-                        return false;
-                    }
-
-                    if (se.tagName() == GraphicsItemNoteDataTag) {
-                        if (!note->load(se)) {
-                            qWarning() << "Note Couldn't load it's data. (Wrong version?)";
-                        }
-                    } else {
-                        qDebug() << "Unknown subelementtype for Item_Note";
-                        return false;
-                    }
-                }
-
-                itemsOut->append(note);
-                connect(note, SIGNAL(changed()), this, SIGNAL(sceneRealChanged()));
+    auto countChildrenIf = [](QDomElement const& parent,
+                              std::function<bool(QDomElement const&)> predicate) {
+        int count = 0;
+        for (QDomNode n = parent.firstChild(); !n.isNull(); n = n.nextSibling()) {
+            if (predicate(n.toElement())) {
+                count++;
             }
         }
+        return count;
+    };
 
-        n = n.nextSibling();
+    auto extractAbstractItem = [this](QDomElement const& element)
+            -> std::pair<AbstractItem*, quint32> {
+        QString const type = element.attribute(TypeAttrTag);
+        QScopedPointer<AbstractItem> itemPtr{
+            PluginManager::instance()->createInstance<AbstractItem>(type)
+        };
+
+        if (itemPtr.isNull()) {
+            qDebug() << "Couldn't cast Item to" << type;
+            qDebug() << "Wrong version of Plugin?";
+            return {};
+        }
+
+        if (!loadItemData(element, itemPtr.data(), GraphicsItemDataTag)) {
+            return {};
+        }
+
+        QString const name = element.attribute(NameAttrTag);
+        qreal   const x    = element.attribute(XPosAttrTag).toDouble();
+        qreal   const y    = element.attribute(YPosAttrTag).toDouble();
+        qint32  const id   = element.attribute(IdAttrTag).toInt();
+
+        itemPtr->setPos(x, y);
+        itemPtr->setName(name);
+        connect(itemPtr.data(), SIGNAL(changed()), this, SIGNAL(sceneRealChanged()));
+
+        return {itemPtr.take(), id};
+    };
+
+    auto extractConnector = [this, shouldConnectIO](QDomElement const& element,
+            QHash<qint32, AbstractItem*> const& itemIds) -> Item_Connector* {
+
+        auto interval = [](int const low, int const high) {
+            return std::make_pair(low, high);
+        };
+
+        auto contains = [](std::pair<int, int> const& interval, int const value) {
+            auto const low  = interval.first;
+            auto const high = interval.second;
+            return value >= low && value < high;
+        };
+
+        auto loadConnector = [this](QDomElement const& element, ItemInput* input, ItemOutput* output) {
+            auto connector = new Item_Connector(output, input);
+            connector->load_additional(element); // Load user modified path or custom routing
+            connector->do_update();
+            connect(connector, SIGNAL(changed()), this, SIGNAL(sceneRealChanged()));
+            return connector;
+        };
+
+        qint32  const sourceObject          = element.attribute(FromItemAttrTag).toInt();
+        qint32  const sourceOutputIndex     = element.attribute(FromIndexAttrTag).toInt();
+        qint32  const destinationObject     = element.attribute(ToItemAttrTag).toInt();
+        qint32  const destinationInputIndex = element.attribute(ToIndexAttrTag).toInt();
+        QString const typeName              = element.attribute(TransportTypeAttrTag);
+        qint32  const typeId                = QMetaType::type(typeName.toStdString().c_str());
+
+        if (!itemIds.contains(sourceObject) || !itemIds.contains(destinationObject)) {
+            qCritical() << "Couldn't find begin and end object of connector. Connector deleted.";
+            return nullptr;
+
+        } else if (typeId == QMetaType::UnknownType) {
+            qCritical() << "Unknown transport type \"" << typeName << "\"! Connector deleted.";
+            return nullptr;
+        }
+
+        auto sourceItem      = itemIds[sourceObject];
+        auto destinationItem = itemIds[destinationObject];
+
+        auto const outputs = sourceItem->outputs();
+        auto const inputs  = destinationItem->inputs();
+
+        if (!contains(interval(0, outputs.count()), sourceOutputIndex)) {
+            qCritical() << QString("Couldn't find ouput for connector on item %1. Connector deleted.").arg(sourceItem->name());
+            return nullptr;
+        }
+
+        if (!contains(interval(0, inputs.count()), destinationInputIndex)) {
+            qCritical() << QString("Couldn't find input for connector on item %1. Connector deleted.").arg(destinationItem->name());
+            return nullptr;
+        }
+
+        auto input  = inputs.at(destinationInputIndex);
+        auto output = outputs.at(sourceOutputIndex);
+
+        if (input->transportType() != typeId) {
+            qCritical() << QString("Connector Type is %1. Input of Item %2 is of Type %3. Connector deleted.").arg(typeId).arg(destinationItem->name()).arg(input->transportType());
+            return nullptr;
+        }
+
+        if (output->transportType() != typeId) {
+            qCritical() << QString("Connector Type is %1. Output of Item %2 is of Type %3. Connector deleted.").arg(typeId).arg(sourceItem->name()).arg(output->transportType());
+            return nullptr;
+        }
+
+        // Disable signals if an actual data connection is not required,
+        // for example when we are only loading these items in order to
+        // render a pixmap image of their appearance.  Simply not connecting
+        // the input and output would not work since their appearance depends
+        // on whether or not they are connected.
+        if (!shouldConnectIO) {
+            input->blockSignals(true);
+            output->blockSignals(true);
+        }
+        input->connectOutput(output); // Data connection
+
+        return loadConnector(element, input, output);
+    };
+
+    auto extractNote = [this](QDomElement const& element) -> ItemNote* {
+        auto loadNote = [](QDomElement const& element) {
+            auto note = new ItemNote();
+            qreal const x = element.attribute(XPosAttrTag).toDouble();
+            qreal const y = element.attribute(YPosAttrTag).toDouble();
+            note->setPos(x, y);
+            return note;
+        };
+
+        QScopedPointer<ItemNote> notePtr{loadNote(element)};
+
+        if (!loadItemData(element, notePtr.data(), GraphicsItemNoteDataTag)) {
+            return {};
+        }
+
+        connect(notePtr.data(), SIGNAL(changed()), this, SIGNAL(sceneRealChanged()));
+        return notePtr.take();
+    };
+
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    auto reportingFunction = std::bind(&ItemScene::loadingProgress, this, _1, _2, QString{""});
+    auto const progressGoal = countChildrenIf(items, [](QDomElement const& element) {
+        return element.tagName() == GraphicsItemTag ||
+               element.tagName() == GraphicsItemNoteTag;
+    });
+
+    QHash<qint32, AbstractItem*> itemIds{};
+
+    ProgressReporter progress{reportingFunction, progressGoal, shouldReportProgress};
+    progress.report();
+
+    // since itemsOut is a pointer, it could also be captured by value, but we
+    // want to express that it is written to.
+    auto extractGraphicsItem = [&itemIds, &itemsOut,
+                                extractAbstractItem,
+                                extractConnector, extractNote]
+            (QDomElement const& element, ProgressReporter& progress) {
+        auto const tagName = element.tagName();
+
+        if (tagName == GraphicsItemTag) {
+            progress.advance();
+            progress.report("Loading graphics item ...");
+            AbstractItem *item;
+            qint32 id;
+            std::tie(item, id) = extractAbstractItem(element);
+            if (item != nullptr) {
+                itemsOut->append(item);
+                itemIds.insert(id, item);
+                progress.report("Successfully loaded item of type " + item->typeName());
+                return true;
+            } else {
+                qWarning() << "Failed to load graphics item!";
+                return false;
+            }
+
+        } else if (tagName == GraphicsItemConnectorTag) {
+            // Do not advance progress as connectors are not included in the total item count.
+            progress.report("Loading connection between items");
+
+            auto connector = extractConnector(element, itemIds);
+            itemsOut->append(connector);
+
+            return true;
+
+        } else if (tagName == GraphicsItemNoteTag) {
+            progress.advance();
+            progress.report("Loading notes");
+
+            auto note = extractNote(element);
+            itemsOut->append(note);
+
+            return true;
+        }
+
+        return false;
+    };
+
+    for (QDomNode node = items.firstChild(); !node.isNull(); node = node.nextSibling()) {
+        QDomElement const element = node.toElement();
+
+        if (element.isNull()) {
+            continue;
+        }
+
+        if (!extractGraphicsItem(element, progress)) {
+            qWarning() << "Failed to load item from element tagged " << element.tagName();
+        }
     }
 
-    if (reportProgress) {
-        emit loadingProgress(100);
-    }
+    progress.done();
+    progress.report("Finished loading items");
 
     return true;
 }

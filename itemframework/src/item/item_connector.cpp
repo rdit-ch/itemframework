@@ -275,7 +275,7 @@ bool Item_Connector::save_additional(QDomDocument&, QDomElement& de) const
     return true;
 }
 
-bool Item_Connector::load_additional(QDomElement& de)
+bool Item_Connector::load_additional(QDomElement const& de)
 {
     if (de.hasAttribute("rmode") && de.hasAttribute("len") && de.hasAttribute("hori")) {
         int r = de.attribute("rmode").toInt();

@@ -36,6 +36,7 @@ AbstractItem::AbstractItem(QString typeName) : QGraphicsObject(), d_ptr(new Abst
     QFont typeFont;
     typeFont.setPixelSize(12);
     typeFont.setWeight(75);
+    d->_typeLabel.setBrush(QBrush(QPalette().text().color()));
     d->_typeLabel.setFont(typeFont);
     d->_typeLabel.setText(d->_type);
     d->_typeLabel.setPos(-(d->_typeLabel.boundingRect().width() / 2), d->_boundingRect.y());
@@ -51,6 +52,7 @@ AbstractItem::AbstractItem(QString typeName) : QGraphicsObject(), d_ptr(new Abst
     QFont nameFont;
     nameFont.setPixelSize(12);
     d->_nameLabel.setFont(nameFont);
+    d->_nameLabel.setBrush(QBrush(QPalette().text().color()));
 
     QString name = QString("%1%2").arg(typeName.toLower()).arg(itemNumber);
     setName(name);
@@ -325,6 +327,38 @@ ItemOutput* AbstractItem::addOutput(int type, QString const& description)
     return output;
 }
 
+void AbstractItem::removeInput(ItemInput* itemInput)
+{
+    Q_D(AbstractItem);
+
+    for (auto input : d->_inputs) {
+        if (input == itemInput) {
+            input->disconnectOutput();
+            d->_inputs.removeOne(input);
+            d->realignInputs();
+            delete input;
+            update();
+            return;
+        }
+    }
+}
+
+void AbstractItem::removeOutput(ItemOutput *itemOutput)
+{
+    Q_D(AbstractItem);
+
+    for (auto output : d->_outputs) {
+        if (output == itemOutput) {
+            output->disconnectInputs();
+            d->_outputs.removeOne(output);
+            d->realignOutputs();
+            delete output;
+            update();
+            return;
+        }
+    }
+}
+
 void AbstractItem::setOutputData(ItemOutput* output, QObject* data)
 {
     if (output == NULL || output->owner() != this) {
@@ -338,13 +372,12 @@ void AbstractItem::clearInputs()
 {
     Q_D(AbstractItem);
 
-    for (int i = d->_inputs.count() - 1; i >= 0; i--) {
-        ItemInput* input = d->_inputs.at(i);
+    for (ItemInput* input : d->_inputs) {
         input->disconnectOutput();
-        d->_inputs.removeAt(i);
         delete input;
     }
 
+    d->_inputs.clear();
     update();
 }
 
@@ -352,12 +385,12 @@ void AbstractItem::clearOutputs()
 {
     Q_D(AbstractItem);
 
-    for (int i = d->_outputs.count() - 1; i >= 0; i--) {
-        ItemOutput* output = d->_outputs.at(i);
+    for (ItemOutput* output : d->_outputs) {
         output->disconnectInputs();
-        d->_outputs.removeAt(i);
         delete output;
     }
+
+    d->_outputs.clear();
 
     update();
 }
@@ -630,4 +663,3 @@ int AbstractItem::connectorWidth()
 {
     return AbstractItemPrivate::_connectorWidth;
 }
-

@@ -327,29 +327,29 @@ ItemOutput* AbstractItem::addOutput(int type, QString const& description)
     return output;
 }
 
-void AbstractItem::remove(ItemInput* itemInput)
+void AbstractItem::remove(ItemInput* input)
 {
     Q_D(AbstractItem);
 
-    if (itemInput != nullptr &&
-            d->_inputs.removeOne(itemInput)) {
-        itemInput->disconnectOutput();
+    if (input != nullptr &&
+            d->_inputs.removeOne(input)) {
+        input->disconnectOutput();
         d->realignInputs();
-        delete itemInput;
+        delete input;
         update();
     }
 }
 
-void AbstractItem::remove(ItemOutput* itemOutput)
+void AbstractItem::remove(ItemOutput* output)
 {
     Q_D(AbstractItem);
 
-    if (itemOutput != nullptr &&
-            d->_outputs.removeOne(itemOutput)) {
-        itemOutput->disconnectInputs();
+    if (output != nullptr &&
+            d->_outputs.removeOne(output)) {
+        output->disconnectInputs();
 
         d->realignOutputs();
-        delete itemOutput;
+        delete output;
         update();
     }
 }

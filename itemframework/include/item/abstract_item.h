@@ -265,24 +265,24 @@ protected:
 
     /**
      * @brief Removes an input from this item
-     * @param itemInput a pointer to the output that should be removed
+     * @param input a pointer to the output that should be removed
      *
      * \sa inputs
      * \sa remove
      * \sa clearInputs
      * \sa addInput
      */
-    void remove(ItemInput* itemInput);
+    void remove(ItemInput* input);
 
     /**
      * @brief Removes an output from this item
-     * @param itemOutput a pointer to the output that should be removed
+     * @param output a pointer to the output that should be removed
      *
      * \sa outputs
      * \sa clearOutputs
      * \sa addOutput
      */
-    void remove(ItemOutput* itemOutput);
+    void remove(ItemOutput* output);
 
     /**
      * @brief Remove all the inputs from this item

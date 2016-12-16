@@ -327,35 +327,30 @@ ItemOutput* AbstractItem::addOutput(int type, QString const& description)
     return output;
 }
 
-void AbstractItem::removeInput(ItemInput* itemInput)
+void AbstractItem::remove(ItemInput* itemInput)
 {
     Q_D(AbstractItem);
 
-    for (auto input : d->_inputs) {
-        if (input == itemInput) {
-            input->disconnectOutput();
-            d->_inputs.removeOne(input);
-            d->realignInputs();
-            delete input;
-            update();
-            return;
-        }
+    if (itemInput != nullptr &&
+            d->_inputs.removeOne(itemInput)) {
+        itemInput->disconnectOutput();
+        d->realignInputs();
+        delete itemInput;
+        update();
     }
 }
 
-void AbstractItem::removeOutput(ItemOutput *itemOutput)
+void AbstractItem::remove(ItemOutput* itemOutput)
 {
     Q_D(AbstractItem);
 
-    for (auto output : d->_outputs) {
-        if (output == itemOutput) {
-            output->disconnectInputs();
-            d->_outputs.removeOne(output);
-            d->realignOutputs();
-            delete output;
-            update();
-            return;
-        }
+    if (itemOutput != nullptr &&
+            d->_outputs.removeOne(itemOutput)) {
+        itemOutput->disconnectInputs();
+
+        d->realignOutputs();
+        delete itemOutput;
+        update();
     }
 }
 
@@ -372,11 +367,9 @@ void AbstractItem::clearInputs()
 {
     Q_D(AbstractItem);
 
-    for (ItemInput* input : d->_inputs) {
-        input->disconnectOutput();
-        delete input;
-    }
-
+    std::for_each(d->_inputs.begin(), d->_inputs.end(),
+                  std::mem_fn(&ItemInput::disconnectOutput));
+    qDeleteAll(d->_inputs);
     d->_inputs.clear();
     update();
 }
@@ -385,13 +378,10 @@ void AbstractItem::clearOutputs()
 {
     Q_D(AbstractItem);
 
-    for (ItemOutput* output : d->_outputs) {
-        output->disconnectInputs();
-        delete output;
-    }
-
+    std::for_each(d->_outputs.begin(), d->_outputs.end(),
+                  std::mem_fn(&ItemOutput::disconnectInputs));
+    qDeleteAll(d->_outputs);
     d->_outputs.clear();
-
     update();
 }
 
@@ -483,45 +473,34 @@ QPen AbstractItem::connectorStyle(int type)
     return Resource::get(QString("item_connector_pen%1").arg(type), QPen(Qt::black, connectorHeight()));
 }
 
-void AbstractItem::disconnectConnections() {
+void AbstractItem::disconnectConnections()
+{
     Q_D(AbstractItem);
-    for(ItemInput* input : d->_inputs) {
-        input->disconnectOutput();
-    }
-    for(ItemOutput* output: d->_outputs) {
-        output->disconnectInputs();
-    }
+    std::for_each(d->_inputs.begin(), d->_inputs.end(),
+                  std::mem_fn(&ItemInput::disconnectOutput));
+    std::for_each(d->_outputs.begin(), d->_outputs.end(),
+                  std::mem_fn(&ItemOutput::disconnectInputs));
 }
 
 AbstractItem::~AbstractItem()
 {
     Q_D(AbstractItem);
 
-    bool changes = false;
+    auto disconnectItem=[this](QObject* sender){
+        disconnect(sender, 0, this, 0);
+    };
 
-    QMutableListIterator<ItemInput*> it_inp(d->_inputs);
-    while(it_inp.hasNext()) {
-        ItemInput* input = it_inp.next();
-        disconnect(input,0,this,0);
-        input->disconnectOutput();
-        it_inp.remove();
-        delete input;
-        changes = true;
-    }
+    bool const changes = (d->_inputs.size() > 0) ||
+                         (d->_outputs.size() > 0) ||
+                         (scene() != NULL);
 
-    QMutableListIterator<ItemOutput*> it_out(d->_outputs);
-    while(it_out.hasNext()) {
-        ItemOutput* output = it_out.next();
-        disconnect(output,0,this,0);
-        output->disconnectInputs();
-        it_out.remove();
-        delete output;
-        changes = true;
-    }
+    std::for_each(d->_inputs.begin(), d->_inputs.end(), disconnectItem);
+    std::for_each(d->_outputs.begin(), d->_outputs.end(), disconnectItem);
+    clearInputs();
+    clearOutputs();
 
     if (scene() != NULL) {
         scene()->removeItem(this);
-        changes = true;
     }
 
     if (changes) {

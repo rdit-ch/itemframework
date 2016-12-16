@@ -271,7 +271,7 @@ protected:
      * \sa clearInputs
      * \sa addInput
      */
-    void removeInput(ItemInput* itemInput);
+    void remove(ItemInput* itemInput);
 
     /**
      * @brief Removes an output from this item
@@ -281,7 +281,7 @@ protected:
      * \sa clearOutputs
      * \sa addOutput
      */
-    void removeOutput(ItemOutput* itemOutput);
+    void remove(ItemOutput* itemOutput);
 
     /**
      * @brief Remove all the inputs from this item

@@ -258,7 +258,7 @@ protected:
      * @return A pointer to the newly added output
      *
      * \sa outputs
-     * \sa removeOutput
+     * \sa remove
      * \sa clearOutputs
      */
     ItemOutput* addOutput(int transportType, QString const& description = "");
@@ -268,6 +268,7 @@ protected:
      * @param itemInput a pointer to the output that should be removed
      *
      * \sa inputs
+     * \sa remove
      * \sa clearInputs
      * \sa addInput
      */

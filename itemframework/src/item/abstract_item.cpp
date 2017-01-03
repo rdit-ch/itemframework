@@ -421,16 +421,12 @@ QVariant AbstractItem::itemChange(GraphicsItemChange change, const QVariant& val
 {
     Q_D(AbstractItem);
 
+    auto updateScenePosition = std::mem_fn(&AbstractItemInputOutputBase::updateScenePosition);
+
     switch (change) {
     case QGraphicsItem::ItemScenePositionHasChanged:
-        for (auto input : d->_inputs) {
-            input->updateScenePosition();
-        }
-
-        for (auto output : d->_outputs) {
-            output->updateScenePosition();
-        }
-
+        std::for_each(d->_inputs.begin(), d->_inputs.end(), updateScenePosition);
+        std::for_each(d->_outputs.begin(), d->_outputs.end(), updateScenePosition);
         emit changed();
 
         break;
@@ -487,19 +483,19 @@ AbstractItem::~AbstractItem()
     Q_D(AbstractItem);
 
     auto disconnectItem=[this](QObject* sender){
-        disconnect(sender, 0, this, 0);
+        sender->disconnect(this);
     };
 
     bool const changes = (d->_inputs.size() > 0) ||
                          (d->_outputs.size() > 0) ||
-                         (scene() != NULL);
+                         (scene() != nullptr);
 
     std::for_each(d->_inputs.begin(), d->_inputs.end(), disconnectItem);
     std::for_each(d->_outputs.begin(), d->_outputs.end(), disconnectItem);
     clearInputs();
     clearOutputs();
 
-    if (scene() != NULL) {
+    if (scene() != nullptr) {
         scene()->removeItem(this);
     }
 

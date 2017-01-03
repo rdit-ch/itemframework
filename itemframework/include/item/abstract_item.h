@@ -265,10 +265,9 @@ protected:
 
     /**
      * @brief Removes an input from this item
-     * @param input a pointer to the output that should be removed
+     * @param input a pointer to the input that should be removed
      *
      * \sa inputs
-     * \sa remove
      * \sa clearInputs
      * \sa addInput
      */

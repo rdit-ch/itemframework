@@ -36,6 +36,7 @@ AbstractItem::AbstractItem(QString typeName) : QGraphicsObject(), d_ptr(new Abst
     QFont typeFont;
     typeFont.setPixelSize(12);
     typeFont.setWeight(75);
+    d->_typeLabel.setBrush(QBrush(QPalette().text().color()));
     d->_typeLabel.setFont(typeFont);
     d->_typeLabel.setText(d->_type);
     d->_typeLabel.setPos(-(d->_typeLabel.boundingRect().width() / 2), d->_boundingRect.y());
@@ -51,6 +52,7 @@ AbstractItem::AbstractItem(QString typeName) : QGraphicsObject(), d_ptr(new Abst
     QFont nameFont;
     nameFont.setPixelSize(12);
     d->_nameLabel.setFont(nameFont);
+    d->_nameLabel.setBrush(QBrush(QPalette().text().color()));
 
     QString name = QString("%1%2").arg(typeName.toLower()).arg(itemNumber);
     setName(name);
@@ -325,6 +327,33 @@ ItemOutput* AbstractItem::addOutput(int type, QString const& description)
     return output;
 }
 
+void AbstractItem::remove(ItemInput* input)
+{
+    Q_D(AbstractItem);
+
+    if (input != nullptr &&
+            d->_inputs.removeOne(input)) {
+        input->disconnectOutput();
+        d->realignInputs();
+        delete input;
+        update();
+    }
+}
+
+void AbstractItem::remove(ItemOutput* output)
+{
+    Q_D(AbstractItem);
+
+    if (output != nullptr &&
+            d->_outputs.removeOne(output)) {
+        output->disconnectInputs();
+
+        d->realignOutputs();
+        delete output;
+        update();
+    }
+}
+
 void AbstractItem::setOutputData(ItemOutput* output, QObject* data)
 {
     if (output == NULL || output->owner() != this) {
@@ -338,13 +367,10 @@ void AbstractItem::clearInputs()
 {
     Q_D(AbstractItem);
 
-    for (int i = d->_inputs.count() - 1; i >= 0; i--) {
-        ItemInput* input = d->_inputs.at(i);
-        input->disconnectOutput();
-        d->_inputs.removeAt(i);
-        delete input;
-    }
-
+    std::for_each(d->_inputs.begin(), d->_inputs.end(),
+                  std::mem_fn(&ItemInput::disconnectOutput));
+    qDeleteAll(d->_inputs);
+    d->_inputs.clear();
     update();
 }
 
@@ -352,13 +378,10 @@ void AbstractItem::clearOutputs()
 {
     Q_D(AbstractItem);
 
-    for (int i = d->_outputs.count() - 1; i >= 0; i--) {
-        ItemOutput* output = d->_outputs.at(i);
-        output->disconnectInputs();
-        d->_outputs.removeAt(i);
-        delete output;
-    }
-
+    std::for_each(d->_outputs.begin(), d->_outputs.end(),
+                  std::mem_fn(&ItemOutput::disconnectInputs));
+    qDeleteAll(d->_outputs);
+    d->_outputs.clear();
     update();
 }
 
@@ -398,16 +421,12 @@ QVariant AbstractItem::itemChange(GraphicsItemChange change, const QVariant& val
 {
     Q_D(AbstractItem);
 
+    auto updateScenePosition = std::mem_fn(&AbstractItemInputOutputBase::updateScenePosition);
+
     switch (change) {
     case QGraphicsItem::ItemScenePositionHasChanged:
-        for (auto input : d->_inputs) {
-            input->updateScenePosition();
-        }
-
-        for (auto output : d->_outputs) {
-            output->updateScenePosition();
-        }
-
+        std::for_each(d->_inputs.begin(), d->_inputs.end(), updateScenePosition);
+        std::for_each(d->_outputs.begin(), d->_outputs.end(), updateScenePosition);
         emit changed();
 
         break;
@@ -450,45 +469,34 @@ QPen AbstractItem::connectorStyle(int type)
     return Resource::get(QString("item_connector_pen%1").arg(type), QPen(Qt::black, connectorHeight()));
 }
 
-void AbstractItem::disconnectConnections() {
+void AbstractItem::disconnectConnections()
+{
     Q_D(AbstractItem);
-    for(ItemInput* input : d->_inputs) {
-        input->disconnectOutput();
-    }
-    for(ItemOutput* output: d->_outputs) {
-        output->disconnectInputs();
-    }
+    std::for_each(d->_inputs.begin(), d->_inputs.end(),
+                  std::mem_fn(&ItemInput::disconnectOutput));
+    std::for_each(d->_outputs.begin(), d->_outputs.end(),
+                  std::mem_fn(&ItemOutput::disconnectInputs));
 }
 
 AbstractItem::~AbstractItem()
 {
     Q_D(AbstractItem);
 
-    bool changes = false;
+    auto disconnectItem=[this](QObject* sender){
+        sender->disconnect(this);
+    };
 
-    QMutableListIterator<ItemInput*> it_inp(d->_inputs);
-    while(it_inp.hasNext()) {
-        ItemInput* input = it_inp.next();
-        disconnect(input,0,this,0);
-        input->disconnectOutput();
-        it_inp.remove();
-        delete input;
-        changes = true;
-    }
+    bool const changes = (d->_inputs.size() > 0) ||
+                         (d->_outputs.size() > 0) ||
+                         (scene() != nullptr);
 
-    QMutableListIterator<ItemOutput*> it_out(d->_outputs);
-    while(it_out.hasNext()) {
-        ItemOutput* output = it_out.next();
-        disconnect(output,0,this,0);
-        output->disconnectInputs();
-        it_out.remove();
-        delete output;
-        changes = true;
-    }
+    std::for_each(d->_inputs.begin(), d->_inputs.end(), disconnectItem);
+    std::for_each(d->_outputs.begin(), d->_outputs.end(), disconnectItem);
+    clearInputs();
+    clearOutputs();
 
-    if (scene() != NULL) {
+    if (scene() != nullptr) {
         scene()->removeItem(this);
-        changes = true;
     }
 
     if (changes) {
@@ -630,4 +638,3 @@ int AbstractItem::connectorWidth()
 {
     return AbstractItemPrivate::_connectorWidth;
 }
-

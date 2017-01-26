@@ -1,5 +1,5 @@
-#ifndef PROGRESS_HELPER_H
-#define PROGRESS_HELPER_H
+#ifndef PROGRESS_REPORTER_H
+#define PROGRESS_REPORTER_H
 
 #include "appcore.h" // ITEMFRAMEWORK_EXPORT
 
@@ -32,4 +32,4 @@ private:
     Q_DECLARE_PRIVATE(ProgressReporter)
 };
 
-#endif // PROGRESS_HELPER_H
+#endif // PROGRESS_REPORTER_H

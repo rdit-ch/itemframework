@@ -27,7 +27,7 @@ SOURCES     +=  \
                 src/helper/settings_scope.cpp \
                 src/helper/dom_helper.cpp \
                 src/helper/singleton.cpp \
-                src/helper/progress_helper.cpp \
+                src/helper/progress_reporter.cpp \
                 src/item/abstract_item.cpp \
                 src/item/abstract_window_item.cpp \
                 src/item/abstract_item_input_output_base.cpp \
@@ -94,7 +94,7 @@ HEADERS     +=  \
                 src/gui/about_dialog.h \
                 src/helper/startup_helper_p.h \
                 src/helper/settings_scope_p.h \
-                src/helper/progress_helper_p.h \
+                src/helper/progress_reporter_p.h \
                 src/item/abstract_item_p.h \
                 src/item/abstract_window_item_p.h \
                 src/item/abstract_item_input_output_base_p.h \
@@ -176,7 +176,7 @@ HEADERS     +=     \
                 include/helper/startup_helper_templates.h \
                 include/helper/settings_scope.h \
                 include/helper/dom_helper.h \
-                include/helper/progress_helper.h
+                include/helper/progress_reporter.h
 
 FORMS       +=  \
                 src/gui/gui_main_window.ui \

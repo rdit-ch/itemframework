@@ -1,5 +1,4 @@
 #include "item_serializer.h"
-#include "helper/progress_helper.h"
 #include "item/abstract_item.h"
 #include "item/item_input.h"
 #include "item/item_output.h"

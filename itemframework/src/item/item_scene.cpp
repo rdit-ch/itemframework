@@ -12,7 +12,7 @@
 #include "item_templates_widget.h"
 #include "gui/gui_manager.h"
 #include "helper/settings_scope.h"
-#include "helper/progress_helper.h"
+#include "helper/progress_reporter.h"
 #include "item/item_serializer.h"
 
 #include <QGraphicsSceneMouseEvent>

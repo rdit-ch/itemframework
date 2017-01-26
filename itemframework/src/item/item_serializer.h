@@ -1,9 +1,8 @@
 #ifndef ITEM_SERIALIZER_H
 #define ITEM_SERIALIZER_H
 
+#include "helper/progress_reporter.h"
 #include "appcore.h"
-
-#include "helper/progress_helper.h"
 
 #include <QDomDocument>
 #include <QDomElement>

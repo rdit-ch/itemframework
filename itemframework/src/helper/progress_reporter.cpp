@@ -1,5 +1,5 @@
-#include "helper/progress_helper.h"
-#include "progress_helper_p.h"
+#include "helper/progress_reporter.h"
+#include "progress_reporter_p.h"
 
 ProgressReporter::ProgressReporter(ReportingFunction reporter, bool enabled)
     : d_ptr{new ProgressReporterPrivate{reporter, 0, 0, enabled}}

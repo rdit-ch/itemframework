@@ -40,6 +40,7 @@ SOURCES     +=  \
                 src/item/item_origin_visualizer.cpp \
                 src/item/item_output.cpp \
                 src/item/item_scene.cpp \
+                src/item/item_serializer.cpp \
                 src/item/item_toolbox_view.cpp \
                 src/item/item_toolbox.cpp \
                 src/item/item_view.cpp \
@@ -105,6 +106,7 @@ HEADERS     +=  \
                 src/item/item_note.h \
                 src/item/item_origin_visualizer_entry.h \
                 src/item/item_scene.h \
+                src/item/item_serializer.h \
                 src/item/item_toolbox_view.h \
                 src/item/item_toolbox.h \
                 src/item/item_view.h \

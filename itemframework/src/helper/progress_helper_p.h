@@ -10,10 +10,10 @@ public:
                                      int start = 0, bool enabled = true);
     int progress() const;
 
-    ProgressReporter::ReportingFunction _reporter;
-    int  _goal;
-    int  _current;
-    bool _enabled;
+    ProgressReporter::ReportingFunction reporter_;
+    int  goal_;
+    int  current_;
+    bool enabled_;
 };
 
 #endif // PROGRESS_HELPER_P_H

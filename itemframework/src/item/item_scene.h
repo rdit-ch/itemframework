@@ -109,11 +109,6 @@ signals:
     void sceneRealChanged();
     void loadingProgress(const int progress, const QString& loadcomment = "", const QString& loadinfo = "Loading Project");
 
-public:
-    bool saveToXml(QDomDocument& document, QDomElement& xml, QList<QGraphicsItem const*> itms) const;
-    bool loadFromXml(QDomElement& dom, QList<QGraphicsItem*>* itemsOut,
-                     bool shouldReportProgress, bool shouldConnectIO = true);
-
 private:
     bool notesInInsertMode();
     void deleteItems(QList<QGraphicsItem*> items);

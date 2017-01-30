@@ -1,7 +1,7 @@
-#ifndef PROGRESS_HELPER_P_H
-#define PROGRESS_HELPER_P_H
+#ifndef PROGRESS_REPORTER_P_H
+#define PROGRESS_REPORTER_P_H
 
-#include "helper/progress_helper.h"
+#include "helper/progress_reporter.h"
 
 class ProgressReporterPrivate
 {
@@ -16,4 +16,4 @@ public:
     bool _enabled;
 };
 
-#endif // PROGRESS_HELPER_P_H
+#endif // PROGRESS_REPORTER_P_H

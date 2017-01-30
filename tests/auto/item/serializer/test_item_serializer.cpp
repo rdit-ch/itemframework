@@ -1,7 +1,6 @@
-#include "test_item_scene.h"
+#include "test_item_serializer.h"
 
-#include "item/item_scene.h"
-#include "project/project_gui.h"
+#include "item/item_serializer.h"
 #include "item/item_connector.h"
 #include "item/item_input.h"
 #include "item/item_output.h"
@@ -211,21 +210,20 @@ void test_ItemScene::initTestCase()
 SingleItemResult test_ItemScene::initSingleItemTestCase()
 {
     SingleItemResult result;
-    ItemScene scene{QSharedPointer<ProjectGui>{}};
+    ItemSerializer serializer{};
 
     QDomDocument document{};
     auto element = document.createElement("testItem");
 
     auto itemA = new SomeItem{"itemA", 42};
     result.itemsBeforeSave_.append(itemA);
-    result.saveSuccess_ = scene.saveToXml(document, element,
-                                reinterpret_cast<QList<QGraphicsItem const*>&>(
-                                              result.itemsBeforeSave_));
+    result.saveSuccess_ = serializer.saveToXml(document, element,
+                                               reinterpret_cast<QList<QGraphicsItem const*>&>(
+                                                   result.itemsBeforeSave_));
 
-    auto const reportProgress = false;
     auto const connectIO = true;
 
-    result.loadSuccess_ = scene.loadFromXml(element, &result.itemsAfterLoad_, reportProgress, connectIO);
+    result.loadSuccess_ = serializer.loadFromXml(element, &result.itemsAfterLoad_, ProgressReporter{}, connectIO);
 
     return result;
 }
@@ -240,7 +238,7 @@ MultipleItemsResult test_ItemScene::initMultipleItemsTestCase()
     };
 
     MultipleItemsResult result;
-    ItemScene scene{QSharedPointer<ProjectGui>{}};
+    ItemSerializer serializer{};
 
     QDomDocument document{};
     auto element = document.createElement("testItems");
@@ -260,14 +258,13 @@ MultipleItemsResult test_ItemScene::initMultipleItemsTestCase()
     result.itemsBeforeSave_.append(connector);
     result.itemsBeforeSave_.append(note);
 
-    result.saveSuccess_ = scene.saveToXml(document, element,
-                                          reinterpret_cast<QList<QGraphicsItem const*>&>(
-                                              result.itemsBeforeSave_));
+    result.saveSuccess_ = serializer.saveToXml(document, element,
+                                               reinterpret_cast<QList<QGraphicsItem const*>&>(
+                                               result.itemsBeforeSave_));
 
-    auto const reportProgress = false;
     auto const connectIO = true;
 
-    result.loadSuccess_ = scene.loadFromXml(element, &result.itemsAfterLoad_, reportProgress, connectIO);
+    result.loadSuccess_ = serializer.loadFromXml(element, &result.itemsAfterLoad_, ProgressReporter{}, connectIO);
 
     return result;
 }

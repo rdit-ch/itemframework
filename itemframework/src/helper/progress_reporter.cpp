@@ -14,8 +14,8 @@ ProgressReporter::ProgressReporter(ReportingFunction reporter, int goal, bool en
 {}
 
 ProgressReporter::ProgressReporter(ProgressReporter const& other)
-    : d_ptr{new ProgressReporterPrivate{other.d_ptr->reporter_, other.d_ptr->goal_,
-                                        other.d_ptr->current_, other.d_ptr->enabled_}}
+    : d_ptr{new ProgressReporterPrivate{other.d_ptr->_reporter, other.d_ptr->_goal,
+                                        other.d_ptr->_current, other.d_ptr->_enabled}}
 {}
 
 ProgressReporter::~ProgressReporter()
@@ -23,69 +23,69 @@ ProgressReporter::~ProgressReporter()
 
 ProgressReporterPrivate::ProgressReporterPrivate(ProgressReporter::ReportingFunction reporter,
                                                  int goal, int current, bool enabled)
-    : reporter_{reporter}, goal_{goal}, current_{current}, enabled_{enabled}
+    : _reporter{reporter}, _goal{goal}, _current{current}, _enabled{enabled}
 {}
 
 int ProgressReporter::current() const
 {
     Q_D(const ProgressReporter);
 
-    return d->current_;
+    return d->_current;
 }
 
 int ProgressReporter::goal() const
 {
     Q_D(const ProgressReporter);
 
-    return d->goal_;
+    return d->_goal;
 }
 
 void ProgressReporter::advance()
 {
     Q_D(ProgressReporter);
 
-    if (d->current_ >= d->goal_) {
+    if (d->_current >= d->_goal) {
         return;
     }
 
-    d->current_++;
+    d->_current++;
 }
 
 void ProgressReporter::done()
 {
     Q_D(ProgressReporter);
 
-    d->current_ = d->goal_;
+    d->_current = d->_goal;
 }
 
 void ProgressReporter::report(QString const& message) const
 {
     Q_D(const ProgressReporter);
 
-    if (!d->enabled_ || d->reporter_ == nullptr) {
+    if (!d->_enabled || d->_reporter == nullptr) {
         return;
     }
 
-    d->reporter_(d->progress(), message);
+    d->_reporter(d->progress(), message);
 }
 
 void ProgressReporter::setEnabled(bool enabled)
 {
     Q_D(ProgressReporter);
 
-    d->enabled_ = enabled;
+    d->_enabled = enabled;
 }
 
 void ProgressReporter::reset(int goal, int current)
 {
     Q_D(ProgressReporter);
 
-    d->current_ = current;
-    d->goal_    = goal;
+    d->_current = current;
+    d->_goal    = goal;
 }
 
 int ProgressReporterPrivate::progress() const
 {
-    return current_ * 100 / goal_;
+    return _current * 100 / _goal;
 }
 

@@ -210,20 +210,18 @@ void test_ItemScene::initTestCase()
 SingleItemResult test_ItemScene::initSingleItemTestCase()
 {
     SingleItemResult result;
-    ItemSerializer serializer{};
-
     QDomDocument document{};
     auto element = document.createElement("testItem");
 
     auto itemA = new SomeItem{"itemA", 42};
     result.itemsBeforeSave_.append(itemA);
-    result.saveSuccess_ = serializer.saveToXml(document, element,
+    result.saveSuccess_ = ItemSerializer::saveToXml(document, element,
                                                reinterpret_cast<QList<QGraphicsItem const*>&>(
                                                    result.itemsBeforeSave_));
 
     auto const connectIO = true;
 
-    result.loadSuccess_ = serializer.loadFromXml(element, &result.itemsAfterLoad_, ProgressReporter{}, connectIO);
+    result.loadSuccess_ = ItemSerializer::loadFromXml(element, &result.itemsAfterLoad_, ProgressReporter{}, connectIO);
 
     return result;
 }
@@ -238,8 +236,6 @@ MultipleItemsResult test_ItemScene::initMultipleItemsTestCase()
     };
 
     MultipleItemsResult result;
-    ItemSerializer serializer{};
-
     QDomDocument document{};
     auto element = document.createElement("testItems");
 
@@ -258,13 +254,13 @@ MultipleItemsResult test_ItemScene::initMultipleItemsTestCase()
     result.itemsBeforeSave_.append(connector);
     result.itemsBeforeSave_.append(note);
 
-    result.saveSuccess_ = serializer.saveToXml(document, element,
+    result.saveSuccess_ = ItemSerializer::saveToXml(document, element,
                                                reinterpret_cast<QList<QGraphicsItem const*>&>(
                                                result.itemsBeforeSave_));
 
     auto const connectIO = true;
 
-    result.loadSuccess_ = serializer.loadFromXml(element, &result.itemsAfterLoad_, ProgressReporter{}, connectIO);
+    result.loadSuccess_ = ItemSerializer::loadFromXml(element, &result.itemsAfterLoad_, ProgressReporter{}, connectIO);
 
     return result;
 }

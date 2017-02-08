@@ -4,7 +4,7 @@
 #include "appcore.h"
 #include <qobject.h>
 
-class ITEMFRAMEWORK_TEST_EXPORT TestComponent
+class TestComponent
 {
     Q_GADGET
 

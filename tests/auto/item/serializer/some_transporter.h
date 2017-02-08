@@ -4,7 +4,7 @@
 #include "appcore.h"
 #include <QObject>
 
-class ITEMFRAMEWORK_EXPORT SomeTransporter : public QObject
+class SomeTransporter : public QObject
 {
     Q_OBJECT
 };

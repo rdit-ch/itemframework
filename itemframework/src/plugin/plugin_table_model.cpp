@@ -5,16 +5,16 @@
 #include <QBrush>
 #include <QStandardItem>
 
-PluginTableModel::PluginTableModel(QObject* parent)
+PluginTableModel::PluginTableModel(QObject* parent) : QAbstractTableModel(parent)
 {
 }
 
-int PluginTableModel::rowCount(const QModelIndex& parent) const
+int PluginTableModel::rowCount(const QModelIndex&) const
 {
     return  _metaDataList.count();
 }
 
-int PluginTableModel::columnCount(const QModelIndex& parent) const
+int PluginTableModel::columnCount(const QModelIndex&) const
 {
     return  PluginMetaData::staticMetaObject.propertyCount() - PluginMetaData::staticMetaObject.propertyOffset();
 }

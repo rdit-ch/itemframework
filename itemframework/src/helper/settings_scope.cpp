@@ -166,6 +166,7 @@ void SettingsScope::setParentScope(SettingsScope* newParent)
 
     }
 
+    /*
     // TODO Notify change
     // Notify change. As we have a new parent, all settings that are not defined in this scope
     // might change. Not only the settings from new parent (and its parent and so on) will have
@@ -174,6 +175,8 @@ void SettingsScope::setParentScope(SettingsScope* newParent)
         qCritical() << QString("%1: UNIMPLEMENTED: scope '%2' reparented but no notification yet!")
                     .arg(Q_FUNC_INFO, name());
     }
+    */
+    emit parentScopeChanged(oldParent);
 }
 
 SettingsScope* SettingsScope::applicationScope()

@@ -221,6 +221,13 @@ signals:
      */
     void scopeChanged();
 
+    /**
+     * @brief Emitted when the parent of the scope changed
+     *
+     * @param old The previous parent
+     */
+    void parentScopeChanged(SettingsScope *old);
+
 private:
     QScopedPointer<class SettingsScopePrivate> d_ptr;
     Q_DECLARE_PRIVATE(SettingsScope);

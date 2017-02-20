@@ -299,11 +299,12 @@ bool DomHelper::loadVariant(QVariant& variant, const QDomElement& element)
         // Complicated types should have a child node that is tagged with the type name or a
         // text node with base64 decoded serialized data.
         // Exception: QList<T> types have a child node tagged with QVariantList (see below)
+        // Exception: QHash<String,T> and QMap<String,T> have a child node tagged with QVariantMap (see below).
         // Try to read child element tagged with type name.
         QDomElement child = element.firstChildElement(typeName);
 
         // If successful, read the variant from child element
-        if (!child.isNull()) {
+        if (!child.isNull() && typeId != QMetaType::QVariantMap && typeId != QMetaType::QVariantList) {
             // The types should be somehow one of the special handled type in ::saveVariant() above.
             // Any special save handling implemented there, must be reflected for load here!
 
@@ -320,29 +321,6 @@ bool DomHelper::loadVariant(QVariant& variant, const QDomElement& element)
                 } else {
                     qCritical() << "Failed to load user-defined type " << typeName;
                 }
-
-            } else if (typeId == QVariant::List) {
-                // Handle variant lists. Read all child nodes tagged ListEntryTag from list
-                // element.
-                QVariantList list;
-                // Get first entry's element
-                QDomElement entryElem = child.firstChildElement(ListEntryTag);
-
-                // For all list entry child nodes, load the variant entries and store them in list
-                while (!entryElem.isNull()) {
-                    QVariant variant;
-
-                    // Read the variant and store it in list if successful
-                    if (loadVariant(variant, entryElem)) {
-                        list << variant;
-                    }
-
-                    // Get next list entry child node from list element
-                    entryElem = entryElem.nextSiblingElement(ListEntryTag);
-                }
-
-                // Store the loaded list in output variant
-                variant = list;
 
             } else if (typeId == QVariant::StringList) {
                 // Handle string lists. Read all child nodes tagged ListEntryTag from list
@@ -379,6 +357,7 @@ bool DomHelper::loadVariant(QVariant& variant, const QDomElement& element)
                    && !(child = element.firstChildElement(QMetaType::typeName(QMetaType::QVariantList))).isNull()) {
             // The found element has a child element of with the tag QVariantList
             //  and the QVariantList can be converted into the target type (QList<T>)
+            //Note: It's entierly possible that typeId == QMetaType::QVariantList. In that case we don't need to convert afterwards
 
             // Handle QLists. Read all child nodes tagged ListEntryTag from list element.
             QVariantList list;
@@ -401,7 +380,7 @@ bool DomHelper::loadVariant(QVariant& variant, const QDomElement& element)
             // Store the loaded list in output variant
             variant = list;
 
-            if (!variant.convert(typeId)) { //QVariantList to QList<T> conversion failed
+            if (typeId != QMetaType::QVariantList && !variant.convert(typeId)) { //QVariantList to QList<T> conversion failed
                 qWarning() << "Could convert QVariantList to" << typeName;
                 return false;
             }
@@ -438,7 +417,11 @@ bool DomHelper::loadVariant(QVariant& variant, const QDomElement& element)
             // Store the loaded map in output variant
             variant = map;
 
-            if (!variant.convert(typeId)) { //QVariantMap to QMap<QString,T> conversion failed
+            if(typeId == QMetaType::QVariantMap) {
+                //nothing to do
+            } else if (typeId == QMetaType::QVariantHash) { //We have to convert QVariantMap to QVariantHash
+                variant = variant.value<QVariantHash>();
+            } else if (!variant.convert(typeId)) { //Usage of custom converter for QVariantMap to QMap<QString,T> conversion failed. See also registerVariantMapConverter
                 qWarning() << "Could convert QVariantMap to" << typeName;
                 return false;
             }

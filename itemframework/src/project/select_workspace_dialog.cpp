@@ -247,7 +247,11 @@ void SelectWorkspaceDialog::showContextMenu(const QPoint& position, const QShare
     }
 
     if(workspace->isValid()){
-        connect(actionEditWorkspace, &QAction::triggered, this, &SelectWorkspaceDialog::showDialogEditWorkspace);
+        connect(actionEditWorkspace, &QAction::triggered, [this, workspace](){
+            AbstractWorkspaceGui* workspaceGui = ProjectManagerGui::abstractWorkspaceGuiClass(workspace, _workspaceGuiVector);
+            QDialog* editWorkspaceDialog = workspaceGui->dialogEditWorkspace(0, workspace);
+            editWorkspaceDialog->exec();
+        });
         connect(actionDeleteWorkspace, &QAction::triggered, this, &SelectWorkspaceDialog::deleteWorkspace);
         connect(actionSetDefault, &QAction::toggled, this, &SelectWorkspaceDialog::defaultWorkspaceChange);
     } else {
@@ -311,29 +315,20 @@ void SelectWorkspaceDialog::loadRecentUsedWorkspace(QTreeWidgetItem* item, int c
             item->setToolTip(TreeWidgetColumn::Connection, QString(""));
         }
 
-        acceptWorkspace(workspace);
+        setSelectedWorkspace(workspace);
+        accept();
     }
 }
 
 void SelectWorkspaceDialog::setSelectedWorkspace(const QSharedPointer<AbstractWorkspace>& workspace)
 {
-    clearSelectedWorkspace();
     _selectedWorkspace = workspace;
-
-    if (!_selectedWorkspace.isNull()) {
-        _ui->buttonAcceptDialog->setEnabled(true);
-    } else {
-        _ui->buttonAcceptDialog->setEnabled(false);
-    }
+    _ui->buttonAcceptDialog->setEnabled(true);
 }
 
 void SelectWorkspaceDialog::clearSelectedWorkspace()
 {
-    if (!_selectedWorkspace.isNull()) {
-        disconnect(_selectedWorkspace.data());
-        _selectedWorkspace.clear();
-    }
-
+    _selectedWorkspace.clear();
     _ui->buttonAcceptDialog->setEnabled(false);
 }
 
@@ -473,27 +468,8 @@ void SelectWorkspaceDialog::showDialogLoadWorkspace()
 
 void SelectWorkspaceDialog::showDialogEditWorkspace()
 {
-    QPushButton* button = qobject_cast<QPushButton*>(sender());
-
-    // Item (workspace) is selected in treewidget and this action was performed by item context menue (edit workspace).
-    if (button == nullptr) {
-        QList<QTreeWidgetItem*> items = _ui->treeWidgetRecentWorkspace->selectedItems();
-
-        if (!items.isEmpty()) {
-            auto workspace = items.first()->data(TreeWidgetColumn::Workspace, Qt::UserRole).value<QSharedPointer<AbstractWorkspace>>();
-
-            if (!workspace.isNull()) {
-                AbstractWorkspaceGui* workspaceGui = ProjectManagerGui::abstractWorkspaceGuiClass(workspace, _workspaceGuiVector);
-                QDialog* editWorkspaceDialog = workspaceGui->dialogEditWorkspace(0, workspace);
-                editWorkspaceDialog->exec();
-                return;
-            }
-        }
-    } else {
-        // No item (workspace) is selected in treewidget and this action was performed by the edit button
-        QDialog* dialogEditWorkspace = createDialogWorkspaceGui(WorkspaceGuiType::editWorkspace, _workspaceGuiVector);
-        dialogEditWorkspace->exec();
-    }
+    QDialog* dialogEditWorkspace = createDialogWorkspaceGui(WorkspaceGuiType::editWorkspace, _workspaceGuiVector);
+    dialogEditWorkspace->exec();
 }
 
 void SelectWorkspaceDialog::onWorkspaceUpdated()

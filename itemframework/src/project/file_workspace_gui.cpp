@@ -6,7 +6,6 @@
 #include "file_workspace_load_dialog.h"
 #include "file_workspace_edit_dialog.h"
 #include "item/item_view.h"
-#include "project_manager_config.h"
 #include "wizard_workspace_export.h"
 #include "wizard_workspace_import.h"
 #include <QAction>
@@ -38,29 +37,9 @@ QString FileWorkspaceGui::workspaceTypeName() const
     return tr("File Workspace");
 }
 
-QDialog* FileWorkspaceGui::dialogNewWorkspace(QDialog* parent) const
+bool FileWorkspaceGui::isTypeFriendly(const QSharedPointer<AbstractWorkspace>& workspace) const
 {
-    QDialog* dialogNewWorkspace = new FileWorkspaceNewDialog(lastUsedWorkspacePath(), parent);
-    connect(dialogNewWorkspace, &QDialog::accepted, this, &FileWorkspaceGui::newWorkspaceAccepted);
-    // Return a QDialog pointer. This widget provides an UI to create a new workspace
-    return dialogNewWorkspace;
-}
-
-QDialog* FileWorkspaceGui::dialogLoadWorkspace(QDialog* parent) const
-{
-    // Return a fileDialog-LoadWorkspace widget pointer.  This widget provides an UI to load workspace.
-    QDialog* dialogLoadWorkspace = new FileWorkspaceLoadDialog(lastUsedWorkspacePath(), parent);
-    connect(dialogLoadWorkspace, &QDialog::accepted, this, &FileWorkspaceGui::loadWorkspaceAccepted);
-    // Return a QDialog pointer. This widget provides an UI to create a new workspace
-    return dialogLoadWorkspace;
-}
-
-QDialog* FileWorkspaceGui::dialogEditWorkspace(QDialog* parent, QSharedPointer<AbstractWorkspace> workspace) const
-{
-    FileWorkspaceEditDialog* fileWorkspaceEditDialog = new FileWorkspaceEditDialog(lastUsedWorkspacePath(), parent);
-    fileWorkspaceEditDialog->setWorkspace(workspace);
-    connect(fileWorkspaceEditDialog, &QDialog::accepted, this, &FileWorkspaceGui::editWorkspaceAccepted);
-    return fileWorkspaceEditDialog;
+    return !qSharedPointerCast<FileWorkspace>(workspace).isNull();
 }
 
 void FileWorkspaceGui::addListWidgetItem(QListWidget* parentListWidget)
@@ -70,9 +49,152 @@ void FileWorkspaceGui::addListWidgetItem(QListWidget* parentListWidget)
     listWidgetItem->setIcon(QIcon(":/core/projectmanager/localdrive"));
 }
 
-bool FileWorkspaceGui::isTypeFriendly(const QSharedPointer<AbstractWorkspace>& workspace) const
+QDialog* FileWorkspaceGui::dialogNewWorkspace(QDialog* parent)
 {
-    return !qSharedPointerCast<FileWorkspace>(workspace).isNull();
+    FileWorkspaceNewDialog* fileWorkspaceNewDialog = new FileWorkspaceNewDialog(lastUsedWorkspacePath(), parent);
+
+    connect(fileWorkspaceNewDialog, &QDialog::accepted, [this, fileWorkspaceNewDialog](){
+        const FileWorkspaceData* workspaceData = fileWorkspaceNewDialog->data();
+
+        if(!FileHelper::directoryExists(workspaceData->directory)){
+            if(!FileHelper::createDirectory(workspaceData->directory)){
+                QMessageBox::warning(0, tr("Create new workspace."), FileHelper::lastError(), QMessageBox::Ok);
+                return;
+            }
+        }
+
+        // Create new file workspace with prefered filename and workspacename
+        auto fileWorkspace = newFileWorkspace(workspaceData);
+        setLastUsedWorkspacePath(fileWorkspace->path());
+
+        if (!fileWorkspace->isValid()) {
+            const QString workspaceErrorMessage = tr("%1.\n\nConnection: \n%2")
+                                                  .arg(fileWorkspace->lastError())
+                                                  .arg(fileWorkspace->connectionString());
+            QMessageBox::warning(0, tr("Loading workspace."), workspaceErrorMessage, QMessageBox::Ok);
+            return;
+        }
+
+        // Emit acceptWorkspace signal to send this workspace to the select workspace dialog
+        emit acceptWorkspace(fileWorkspace);
+
+    });
+    // Return a QDialog pointer. This widget provides an UI to create a new workspace
+    return fileWorkspaceNewDialog;
+}
+
+QDialog* FileWorkspaceGui::dialogLoadWorkspace(QDialog* parent)
+{
+    // Return a fileDialog-LoadWorkspace widget pointer.  This widget provides an UI to load workspace.
+    FileWorkspaceLoadDialog* fileWorkspaceLoadDialog = new FileWorkspaceLoadDialog(lastUsedWorkspacePath(), parent);
+
+    connect(fileWorkspaceLoadDialog, &QDialog::accepted, [this, fileWorkspaceLoadDialog](){
+        fileWorkspaceLoadDialog->setVisible(true);
+        QStringList workspaceFile = fileWorkspaceLoadDialog->selectedFiles();
+
+        if (!workspaceFile.isEmpty()) {
+            // Create new file workspace with prefered filename and workspacename
+            auto fileWorkspace = FileWorkspace::createFileWorkspaceFromFile(workspaceFile.first());
+            setLastUsedWorkspacePath(fileWorkspace->path());
+
+            if (!fileWorkspace->isValid()) {
+                const QString workspaceErrorMessage = tr("Workspace is invalid.\n\nConnection: \n%1\n\nError:\n%2")
+                                                      .arg(fileWorkspace->connectionString())
+                                                      .arg(fileWorkspace->lastError());
+
+                QMessageBox::warning(0, tr("Loading workspace."), workspaceErrorMessage, QMessageBox::Ok);
+                return;
+            }
+
+            // Emit acceptWorkspace signal to send this workspace to the select workspace dialog
+            emit acceptWorkspace(fileWorkspace);
+        }
+    });
+
+    // Return a QDialog pointer. This widget provides an UI to create a new workspace
+    return fileWorkspaceLoadDialog;
+}
+
+QDialog* FileWorkspaceGui::dialogEditWorkspace(QDialog* parent, QSharedPointer<AbstractWorkspace> workspace) const
+{
+    FileWorkspaceEditDialog* fileWorkspaceEditDialog = new FileWorkspaceEditDialog(lastUsedWorkspacePath(), parent);
+    fileWorkspaceEditDialog->setWorkspace(workspace);
+    bool workspaceIsNull = workspace.isNull();
+
+    connect(fileWorkspaceEditDialog, &QDialog::accepted, [this, fileWorkspaceEditDialog, workspaceIsNull](){
+        const FileWorkspaceData* workspacePropertiesInitial = fileWorkspaceEditDialog->workspacePropertiesInitial();
+        const FileWorkspaceData* workspacePropertiesEdited = fileWorkspaceEditDialog->workspacePropertiesEdited();
+
+        QSharedPointer<FileWorkspace> fileWorkspace = fileWorkspaceEditDialog->workspace();
+
+        if(workspaceIsNull){
+            // Edit workspace called by edit button.
+            // Search for this workspace in recent workspace list to get the right shared pointer object.
+            for(QSharedPointer<AbstractWorkspace> workspace : projectManager()->recentWorkspaces()){
+                if(workspace->compare(fileWorkspace)){
+                    fileWorkspace = qSharedPointerCast<FileWorkspace>(workspace);
+                    break;
+                }
+            }
+        }
+
+        if(!fileWorkspace.isNull()){
+             fileWorkspace->setFileEditMode(true);
+
+            if(workspacePropertiesEdited->filePath != workspacePropertiesInitial->filePath){
+                // Copy the workspace file to a new destination
+
+                if(!FileHelper::directoryExists(workspacePropertiesEdited->directory)){
+                    if(!FileHelper::createDirectory(workspacePropertiesEdited->directory)){
+                        QMessageBox::warning(0, tr("Create new workspace."), FileHelper::lastError(), QMessageBox::Ok);
+                        return;
+                    }
+                }
+
+                QFile dstWorkspaceFile(workspacePropertiesEdited->filePath);
+                QFile srcWorkspaceFile(workspacePropertiesInitial->filePath);
+
+
+
+                if (dstWorkspaceFile.exists() && !dstWorkspaceFile.remove()) {
+                    QMessageBox::warning(0, tr("Edit workspace file failed."),
+                                                   QString("Destination file %1 exists and could not be removed.").arg(dstWorkspaceFile.fileName()),
+                                                   QMessageBox::Ok,
+                                                   QMessageBox::Ok);
+                    return;
+                }
+
+                if (!srcWorkspaceFile.copy(dstWorkspaceFile.fileName())) {
+                    QMessageBox::warning(0, tr("Edit workspace file failed."),
+                                                   QString("Source file %1 could not be copied to destination file %2.").
+                                                                          arg(srcWorkspaceFile.fileName()).
+                                                                          arg(dstWorkspaceFile.fileName()),
+                                                   QMessageBox::Ok,
+                                                   QMessageBox::Ok);
+                    return;
+                }
+
+                if (!srcWorkspaceFile.remove()) {
+                    QMessageBox::warning(0, tr("Edit workspace file failed."),
+                                                   QString("Source file %1 could not be removed.").arg(srcWorkspaceFile.fileName()),
+                                                   QMessageBox::Ok,
+                                                   QMessageBox::Ok);
+                    return;
+                }
+
+
+                fileWorkspace->setFilePath(workspacePropertiesEdited->filePath);
+            }
+
+            fileWorkspace->setName(workspacePropertiesEdited->name);
+            fileWorkspace->setDescription(workspacePropertiesEdited->description);
+            fileWorkspace->update();
+            fileWorkspace->save();
+            fileWorkspace->setFileEditMode(false);
+        }
+    });
+
+    return fileWorkspaceEditDialog;
 }
 
 bool FileWorkspaceGui::removeProject(const QSharedPointer<ProjectGui>& projectGui, bool showMessagebox)
@@ -234,138 +356,15 @@ void FileWorkspaceGui::workspaceMenuRequested(const QPoint& position)
     connect(workspaceInfo, &QAction::triggered, this, &FileWorkspaceGui::showWorkspaceInformation);
     connect(importProjects, &QAction::triggered, this, &FileWorkspaceGui::showImportWorkspaceWizard);
     connect(exportWorkspace, &QAction::triggered, this, &FileWorkspaceGui::showExportWorkspaceWizard);
-    connect(editWorkspace, &QAction::triggered, this, &FileWorkspaceGui::showEditWorkspaceDialog);
-    connect(switchWorkspace, &QAction::triggered, this, &AbstractWorkspaceGui::switchWorkspace);
+
+
+    connect(editWorkspace, &QAction::triggered, [this](){
+        QDialog* editWorkspaceDialog = dialogEditWorkspace(0, workspace());
+        editWorkspaceDialog->exec();
+    });
+
+    //connect(switchWorkspace, &QAction::triggered, this, &AbstractWorkspaceGui::switchWorkspace);
     contextMenu.exec(position);
-}
-
-void FileWorkspaceGui::showEditWorkspaceDialog(){
-    QDialog* editWorkspaceDialog = dialogEditWorkspace(0, workspace());
-    editWorkspaceDialog->exec();
-}
-
-void FileWorkspaceGui::loadWorkspaceAccepted()
-{
-    FileWorkspaceLoadDialog* fileWorkspaceLoadDialog = qobject_cast<FileWorkspaceLoadDialog*>(sender());
-
-    if (fileWorkspaceLoadDialog == nullptr) {
-        return;
-    }
-
-    fileWorkspaceLoadDialog->setVisible(true);
-    QStringList workspaceFile = fileWorkspaceLoadDialog->selectedFiles();
-
-    if (!workspaceFile.isEmpty()) {
-        const QString workspaceFilePath = workspaceFile.first();
-        // Create new file workspace with prefered filename and workspacename
-        QSharedPointer<FileWorkspace> fileWorkspace = FileWorkspace::createFileWorkspaceFromFile(workspaceFilePath);
-
-        if (fileWorkspace.isNull()) {
-            return;
-        }
-
-        _lastUsedWorkspacePath = fileWorkspace->path();
-
-        if (!fileWorkspace->isValid()) {
-            const QString workspaceErrorMessage = tr("Workspace is invalid.\n\nConnection: \n%1\n\nError:\n%2")
-                                                  .arg(fileWorkspace->connectionString())
-                                                  .arg(fileWorkspace->lastError());
-
-            QMessageBox::warning(0, tr("Loading workspace."), workspaceErrorMessage, QMessageBox::Ok);
-            return;
-        }
-
-        // Emit acceptWorkspace signal to send this workspace to the select workspace dialog
-        emit acceptWorkspace(fileWorkspace);
-    }
-}
-
-void FileWorkspaceGui::newWorkspaceAccepted()
-{
-    FileWorkspaceNewDialog* fileWorkspaceNewDialog = qobject_cast<FileWorkspaceNewDialog*>(sender());
-
-    if (fileWorkspaceNewDialog == nullptr) {
-        return;
-    }
-
-    const FileWorkspaceData* workspaceProperties = fileWorkspaceNewDialog->data();
-    // Create new file workspace with prefered filename and workspacename
-    QSharedPointer<FileWorkspace> fileWorkspace = newFileWorkspace(workspaceProperties);
-    _lastUsedWorkspacePath = fileWorkspace->path();
-
-    if (!fileWorkspace->isValid()) {
-        const QString workspaceErrorMessage = tr("%1.\n\nConnection: \n%2")
-                                              .arg(fileWorkspace->lastError())
-                                              .arg(fileWorkspace->connectionString());
-        QMessageBox::warning(0, tr("Loading workspace."), workspaceErrorMessage, QMessageBox::Ok);
-        return;
-    }
-
-    // Emit acceptWorkspace signal to send this workspace to the select workspace dialog
-    emit acceptWorkspace(fileWorkspace);
-}
-
-void FileWorkspaceGui::editWorkspaceAccepted()
-{
-    FileWorkspaceEditDialog* fileWorkspaceEditDialog = qobject_cast<FileWorkspaceEditDialog*>(sender());
-    if (fileWorkspaceEditDialog == nullptr) {
-        return;
-    }
-
-    const FileWorkspaceData* workspacePropertiesInitial = fileWorkspaceEditDialog->workspacePropertiesInitial();
-    const FileWorkspaceData* workspacePropertiesEdited = fileWorkspaceEditDialog->workspacePropertiesEdited();
-    QSharedPointer<FileWorkspace> fileWorkspace = fileWorkspaceEditDialog->workspace();
-
-    if(!fileWorkspace.isNull()){
-        if(workspacePropertiesEdited->filePath != workspacePropertiesInitial->filePath){
-            // Copy the workspace file to a new destination
-            QFile dstWorkspaceFile(workspacePropertiesEdited->filePath);
-            QFile srcWorkspaceFile(workspacePropertiesInitial->filePath);
-
-            fileWorkspace->setFileEditMode(true);
-
-            if (dstWorkspaceFile.exists() && !dstWorkspaceFile.remove()) {
-                QMessageBox::warning(0, tr("Edit workspace file failed."),
-                                               QString("Destination file %1 exists and could not be removed.").arg(dstWorkspaceFile.fileName()),
-                                               QMessageBox::Ok,
-                                               QMessageBox::Ok);
-                return;
-            }
-
-            if (!srcWorkspaceFile.copy(dstWorkspaceFile.fileName())) {
-                QMessageBox::warning(0, tr("Edit workspace file failed."),
-                                               QString("Source file %1 could not be copied to destination file %2.").
-                                                                      arg(srcWorkspaceFile.fileName()).
-                                                                      arg(dstWorkspaceFile.fileName()),
-                                               QMessageBox::Ok,
-                                               QMessageBox::Ok);
-                return;
-            }
-
-            if (!srcWorkspaceFile.remove()) {
-                QMessageBox::warning(0, tr("Edit workspace file failed."),
-                                               QString("Source file %1 could not be removed.").arg(srcWorkspaceFile.fileName()),
-                                               QMessageBox::Ok,
-                                               QMessageBox::Ok);
-                return;
-            }
-
-            fileWorkspace->setFileEditMode(false);
-            fileWorkspace->setFilePath(workspacePropertiesEdited->filePath);
-        }
-
-        fileWorkspace->setName(workspacePropertiesEdited->name);
-        fileWorkspace->setDescription(workspacePropertiesEdited->description);
-        fileWorkspace->update();
-
-        if (!fileWorkspace->save()) {
-            QMessageBox::warning(0, tr("Edit workspace file failed."),
-                                           QString("Could not save workspace file \"%1\".").arg(fileWorkspace->fileName()),
-                                           QMessageBox::Ok,
-                                           QMessageBox::Ok);
-            return;
-        }
-    }
 }
 
 void FileWorkspaceGui::showNewProjectDialog()
@@ -390,7 +389,7 @@ void FileWorkspaceGui::showNewProjectDialog()
                                           FileProVersion,
                                           projectDescription);
 
-        auto fileProject = QSharedPointer<FileProject>(new FileProject(workspace()->settingsScope(),
+        QSharedPointer<FileProject> fileProject = QSharedPointer<FileProject>(new FileProject(workspace()->settingsScope(),
                                                                         projectPath,
                                                                         projectDomDocument));
         fileProject->setFastLoad(fastLoad);
@@ -398,6 +397,7 @@ void FileWorkspaceGui::showNewProjectDialog()
         fileProject->save();
         fileWorkspace->addProject(fileProject);
         addProjectGui(QSharedPointer<ProjectGui>(new ProjectGui(this, fileProject)));
+        fileProject->autosave();
     }
 }
 
@@ -453,17 +453,25 @@ QSharedPointer<FileWorkspace> FileWorkspaceGui::newFileWorkspace(const FileWorks
 
 QString FileWorkspaceGui::lastUsedWorkspacePath() const
 {
-    if(_lastUsedWorkspacePath.isEmpty()){
-        QSharedPointer<FileWorkspace> fileWorkspace = qSharedPointerCast<FileWorkspace>(_projectManager->currentWorkspace());
+    return _lastUsedWorkspacePath;
+}
 
-        if(fileWorkspace.isNull()){
-            return QString(HomeFolderUser);
+void FileWorkspaceGui::setLastUsedWorkspacePath(const QString &lastUsedWorkspacePath)
+{
+    if(lastUsedWorkspacePath.isEmpty()){
+        const auto fileWorkspace = qSharedPointerCast<FileWorkspace>(_projectManager->currentWorkspace());
+        if(!fileWorkspace.isNull()){
+            _lastUsedWorkspacePath = fileWorkspace->path();
+        } else {
+            _lastUsedWorkspacePath = DefaultWorkspaceFolder;
         }
-
-        return fileWorkspace->path();
     }
 
-    return _lastUsedWorkspacePath;
+    if(lastUsedWorkspacePath == _lastUsedWorkspacePath){
+        return;
+    }
+
+    _lastUsedWorkspacePath = lastUsedWorkspacePath;
 }
 
 void FileWorkspaceGui::onProjectLoad(const QSharedPointer<ProjectGui>& projectGui)

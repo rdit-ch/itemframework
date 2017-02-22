@@ -37,6 +37,7 @@
 
 // Dir Locations
 #define HomeFolderUser  QStandardPaths::writableLocation(QStandardPaths::HomeLocation)
+#define DefaultWorkspaceFolder  QString("%1/%2").arg(HomeFolderUser).arg(QStringLiteral("Workspace"))
 #define TravizWorkDirectory  "settingWorkDirectory"
 
 // File extensions

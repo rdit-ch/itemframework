@@ -59,12 +59,12 @@ private:
     bool _isLoaded = false;
     int _tabWidgetIndex = -1;
     QString _projectGuiLabel;
-    QString _projectName;
     QString _description;
     bool _domChanged = false;
     QString _lastError;
     QPoint _dialogPositionOffset;
     QPointer<QDialog> _projectInfoDialog;
+    bool _realSceneChangedFlag = false;
 
 signals:
     void projectGuiLabelChanged(QSharedPointer<ProjectGui> projectGui);

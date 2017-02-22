@@ -56,6 +56,7 @@ private slots:
     void onWorkspaceFileChanged(QString file);
     void onWorkspaceDescriptionChanged();
     void onWorkspaceIsDefaultChanged();
+    void onWorkspaceDirectoryChanged();
 };
 
 #endif // FILE_WORKSPACE_EDIT_DIALOG_H

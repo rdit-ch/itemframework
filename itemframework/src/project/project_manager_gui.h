@@ -55,7 +55,6 @@ private:
 
 private slots:
     void openWorkspaceManager();
-    void onSwitchWorkspaceAction();
     void onWorkspaceNameChanged(const QString& workspaceName);
     void onWorkspaceUpdated();
     void onRecentWorkspaceListChanged();

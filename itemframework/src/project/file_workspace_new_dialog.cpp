@@ -10,10 +10,6 @@ FileWorkspaceNewDialog::FileWorkspaceNewDialog(QString lastUsedPath, QDialog* pa
     _parent = parent;
     _lastUsedPath = lastUsedPath;
 
-    if (_lastUsedPath.isEmpty()) {
-        _lastUsedPath = QDir(HomeFolderUser).absolutePath();
-    }
-
     ui->lineEditPath->setText(_lastUsedPath);
 
     _data = new FileWorkspaceData;
@@ -131,9 +127,9 @@ void FileWorkspaceNewDialog::accept()
     const bool isDefault = ui->checkBoxDefault->isChecked();
 
     _data->name = name;
-    _data->filePath = filePath;
+    _data->filePath = QDir::cleanPath(filePath);
     _data->fileName = fileName;
-    _data->directory = directory;
+    _data->directory = QDir::cleanPath(directory);
     _data->description = description;
     _data->isDefault = isDefault;
 

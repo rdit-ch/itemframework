@@ -21,7 +21,6 @@ ProjectGui::ProjectGui(AbstractWorkspaceGui* parent, QSharedPointer<AbstractProj
     _parent = parent;
     _project = project;
     _projectGuiLabel = _project->name();
-    _projectName = _project->name();
     connect(GuiManager::instance(), &GuiManager::mainWindowActivationChange, this, &ProjectGui::onMainWindowActivationChanged);
     connect(_project.data(), &AbstractProject::stateChange, this, &ProjectGui::onStateChanged);
     connect(_project.data(), &AbstractProject::externDomChange, this, &ProjectGui::onExternDomChanged);
@@ -169,6 +168,8 @@ void ProjectGui::reset()
     _project->reset();
 
     if (isLoaded()) {
+        _realSceneChangedFlag = false;
+
         if (!reloadDomDocument() || !isValid()) {
             QMessageBox::warning(0, tr("Error loading Project"), tr("Project is invalid."));
             unload();
@@ -178,24 +179,33 @@ void ProjectGui::reset()
 
 bool ProjectGui::save(bool autosave)
 {
+    QDomDocument projectDomDocumentTemplate = _project->projectDomDocumentTemplate( _project->name(),
+                                                                                    _project->version(),
+                                                                                    _project->description());
+    QDomElement projectRootDomElement =  projectDomDocumentTemplate.documentElement();
+    ItemView* tmpItemView = nullptr;
+
     if (isLoaded()) {
-        QDomDocument projectDomDocumentTemplate = _project->projectDomDocumentTemplate(_project->name(),
-                                                    _project->version(),
-                                                    _project->description());
-        QDomElement projectRootDomElement =  projectDomDocumentTemplate.documentElement();
-        _itemView->save(projectDomDocumentTemplate, projectRootDomElement);
-
-
-        if (_project->setDomDocument(projectDomDocumentTemplate)) {
-            if (autosave) {
-                return _project->autosave();
-            } else {
-                return _project->save();
-            }
-        }
+        tmpItemView = _itemView;
+    } else {
+        tmpItemView = new ItemView(sharedFromThis());
     }
 
-    return false;
+    tmpItemView->save(projectDomDocumentTemplate, projectRootDomElement);
+
+    if (!_project->setDomDocument(projectDomDocumentTemplate)) {
+        return false;
+    }
+
+    if (autosave) {
+        return _project->autosave();
+    } else {
+        return _project->save();
+    }
+
+    if(!isLoaded()) {
+        delete tmpItemView;
+    }
 }
 
 bool ProjectGui::load()
@@ -405,15 +415,8 @@ void ProjectGui::showProjectChangedByExternalDialog()
             reset();
             break;
 
-        case ProjectChangedAction::SaveAll:
-            _parent->saveExternChangedProjects();
-            break;
-
-        case ProjectChangedAction::DiscardAll:
-            _parent->resetExternChangedProjects();
-            break;
-
-        default:
+        case ProjectChangedAction::Close:
+            _parent->unloadProject(sharedFromThis());
             break;
         }
     }
@@ -521,9 +524,13 @@ void ProjectGui::onEditTrigger()
 void ProjectGui::onItemViewSceneChanged()
 {
     _project->setDirty(true);
+    _realSceneChangedFlag = true;
 }
 
 void ProjectGui::onAutosaveTimeout()
 {
-    save(true);
+    if(_realSceneChangedFlag){
+        _realSceneChangedFlag = false;
+        save(true);
+    }
 }

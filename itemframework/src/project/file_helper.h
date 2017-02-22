@@ -58,6 +58,15 @@ public:
     static bool directoryExists(const QString& directoryPath);
 
     /**
+     * @return Returns \c true if the directory was created, otherwise returns \c false.
+     *
+     * @param directoryPath The directoryPath as string.
+     *
+     * \sa directoryExists
+     */
+    static bool createDirectory(const QString &directoryPath);
+
+    /**
      * @return Returns \c true if the file was removed or does not exists, otherwise returns \c false.
      *
      * @param filePath The filepath as string.

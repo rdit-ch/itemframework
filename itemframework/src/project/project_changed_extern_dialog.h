@@ -7,10 +7,8 @@ class QTextEdit;
 
 enum ProjectChangedAction {
     Save,
-    SaveAll,
     Discard,
-    DiscardAll,
-    NoAction
+    Close
 };
 
 namespace Ui

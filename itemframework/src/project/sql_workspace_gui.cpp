@@ -16,13 +16,13 @@ QString SqlWorkspaceGui::workspaceTypeName() const
     return QStringLiteral("Sql Workspace");
 }
 
-QDialog* SqlWorkspaceGui::dialogNewWorkspace(QDialog* parent) const
+QDialog* SqlWorkspaceGui::dialogNewWorkspace(QDialog* parent)
 {
     Q_UNUSED(parent);
     return new QDialog();
 }
 
-QDialog* SqlWorkspaceGui::dialogLoadWorkspace(QDialog* parent) const
+QDialog* SqlWorkspaceGui::dialogLoadWorkspace(QDialog* parent)
 {
     Q_UNUSED(parent);
     return new QDialog();

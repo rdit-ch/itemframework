@@ -13,8 +13,8 @@ public:
     Q_INVOKABLE SqlWorkspaceGui();
     void addListWidgetItem(QListWidget* parentListWidget) Q_DECL_OVERRIDE;
     QString workspaceTypeName() const Q_DECL_OVERRIDE;
-    QDialog* dialogNewWorkspace(QDialog* parent = 0) const Q_DECL_OVERRIDE;
-    QDialog* dialogLoadWorkspace(QDialog* parent = 0) const Q_DECL_OVERRIDE;
+    QDialog* dialogNewWorkspace(QDialog* parent = 0)  Q_DECL_OVERRIDE;
+    QDialog* dialogLoadWorkspace(QDialog* parent = 0) Q_DECL_OVERRIDE;
     QDialog* dialogEditWorkspace(QDialog* parent = 0, QSharedPointer<AbstractWorkspace> workspace = QSharedPointer<AbstractWorkspace>()) const Q_DECL_OVERRIDE;
     bool isTypeFriendly(const QSharedPointer<AbstractWorkspace>& workspace) const Q_DECL_OVERRIDE;
     bool removeProject(const QSharedPointer<ProjectGui>& projectGui, bool showMessagebox = true) Q_DECL_OVERRIDE;

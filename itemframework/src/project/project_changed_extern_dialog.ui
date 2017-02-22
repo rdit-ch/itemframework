@@ -32,20 +32,7 @@
         <string/>
        </property>
        <property name="text">
-        <string>Yes</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButtonYesToAll">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>Yes to all</string>
+        <string>&amp;Yes</string>
        </property>
       </widget>
      </item>
@@ -55,27 +42,14 @@
         <string/>
        </property>
        <property name="text">
-        <string>No</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButtonNoToAll">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="toolTip">
-        <string/>
-       </property>
-       <property name="text">
-        <string>No to all</string>
+        <string>&amp;No</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="pushButtonDetails">
        <property name="text">
-        <string>Details...</string>
+        <string>&amp;Details...</string>
        </property>
        <property name="checkable">
         <bool>true</bool>
@@ -88,7 +62,7 @@
         <string/>
        </property>
        <property name="text">
-        <string>Close</string>
+        <string>&amp;Close</string>
        </property>
       </widget>
      </item>
@@ -102,7 +76,7 @@
    <sender>pushButtonClose</sender>
    <signal>clicked()</signal>
    <receiver>ProjectChangedExternDialog</receiver>
-   <slot>reject()</slot>
+   <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>774</x>
@@ -131,22 +105,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>pushButtonNoToAll</sender>
-   <signal>clicked()</signal>
-   <receiver>ProjectChangedExternDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>603</x>
-     <y>129</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>433</x>
-     <y>88</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>pushButtonYes</sender>
    <signal>clicked()</signal>
    <receiver>ProjectChangedExternDialog</receiver>
@@ -154,22 +112,6 @@
    <hints>
     <hint type="sourcelabel">
      <x>92</x>
-     <y>129</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>433</x>
-     <y>88</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButtonYesToAll</sender>
-   <signal>clicked()</signal>
-   <receiver>ProjectChangedExternDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>262</x>
      <y>129</y>
     </hint>
     <hint type="destinationlabel">

@@ -8,7 +8,6 @@ ProjectChangedExternDialog::ProjectChangedExternDialog(QWidget* parent) :
     ui(new Ui::ProjectChangedExternDialog)
 {
     ui->setupUi(this);
-    _projectChangedAction = NoAction;
 }
 
 ProjectChangedExternDialog::~ProjectChangedExternDialog()
@@ -53,18 +52,12 @@ void ProjectChangedExternDialog::accept()
     if (buttonName == QStringLiteral("pushButtonYes")) {
         // Reload the project
         _projectChangedAction = Discard;
-    } else if (buttonName == QStringLiteral("pushButtonYesToAll")) {
-        // Reload all projects
-        _projectChangedAction = DiscardAll;
     } else if (buttonName == QStringLiteral("pushButtonNo")) {
         // Save the project
         _projectChangedAction = Save;
-    } else if (buttonName == QStringLiteral("pushButtonNoToAll")) {
-        // Save all projects
-        _projectChangedAction = SaveAll;
     } else {
-        // Should not happen but if we are save
-        _projectChangedAction = NoAction;
+        // Close the project
+        _projectChangedAction = Close;
     }
 
     QDialog::accept();

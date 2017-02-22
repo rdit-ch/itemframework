@@ -26,6 +26,22 @@ bool FileHelper::directoryExists(const QString &directoryPath)
     return directory.isDir();
 }
 
+bool FileHelper::createDirectory(const QString &directoryPath){
+    QDir directory(directoryPath);
+
+    if(directory.exists()){
+        return true;
+    }
+
+    if(!QDir().mkpath(directoryPath)){
+        _lastError = QString("Make workspace path \"%1\" failed.").arg(directoryPath);
+        return false;
+    }
+
+    _lastError.clear();
+    return true;
+}
+
 bool FileHelper::removeFile(const QString& filePath)
 {
     QFile file(filePath);

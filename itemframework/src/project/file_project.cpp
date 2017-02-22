@@ -141,10 +141,6 @@ bool FileProject::save()
     setExternChanged(false);
     setDirty(false);
 
-    if (FileHelper::fileExists(_autosaveFilePath)) {
-        autosave();
-    }
-
     return true;
 }
 

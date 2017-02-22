@@ -20,8 +20,8 @@ class AbstractWorkspaceGui : public QObject
     Q_OBJECT
 public:
     virtual ~AbstractWorkspaceGui();
-    virtual QDialog* dialogNewWorkspace(QDialog* parent = 0) const = 0;
-    virtual QDialog* dialogLoadWorkspace(QDialog* parent = 0) const = 0;
+    virtual QDialog* dialogNewWorkspace(QDialog* parent = 0) = 0;
+    virtual QDialog* dialogLoadWorkspace(QDialog* parent = 0) = 0;
     virtual QDialog* dialogEditWorkspace(QDialog* parent = 0, QSharedPointer<AbstractWorkspace> workspace = QSharedPointer<AbstractWorkspace>()) const = 0;
     virtual QString workspaceTypeName() const = 0;
     virtual void addListWidgetItem(QListWidget* parentListWidget) = 0;

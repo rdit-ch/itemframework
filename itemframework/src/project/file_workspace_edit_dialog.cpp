@@ -11,16 +11,12 @@ FileWorkspaceEditDialog::FileWorkspaceEditDialog(QString lastUsedPath, QDialog* 
     _workspacePropertiesEdited = new FileWorkspaceData;
     _actionFileExists = new QAction(QIcon(":/core/projectmanager/workspace_not_valid.png"), "", this);
     _actionFileExists->setToolTip(QLatin1String("File already exists."));
+    _lastUsedPath = lastUsedPath;
 
-    if (lastUsedPath.isEmpty()) {
-        _lastUsedPath = QString(HomeFolderUser);
-    } else {
-        _lastUsedPath = lastUsedPath;
-    }
-
-    _ui->selectedWorkspaceFile->setToolTip(QString("e.g workspaceFile.%1").arg(WspFileExt));
+    _ui->selectedWorkspaceFile->setToolTip(QString("workspaceFile.%1").arg(WspFileExt));
     connect(_ui->selectedWorkspaceName, &QLineEdit::textChanged, this, &FileWorkspaceEditDialog::onWorkspaceNameChanged);
     connect(_ui->selectedWorkspaceFile, &QLineEdit::textChanged, this, &FileWorkspaceEditDialog::onWorkspaceFileChanged);
+    connect(_ui->selectedWorkspaceDirectory, &QLineEdit::textChanged, this, &FileWorkspaceEditDialog::onWorkspaceDirectoryChanged);
     connect(_ui->selectedWorkspaceDescription, &QTextEdit::textChanged, this, &FileWorkspaceEditDialog::onWorkspaceDescriptionChanged);
 }
 
@@ -171,7 +167,7 @@ void FileWorkspaceEditDialog::accept()
 {
     _workspacePropertiesEdited->name = _ui->selectedWorkspaceName->text();
     _workspacePropertiesEdited->fileName = _ui->selectedWorkspaceFile->text();
-    _workspacePropertiesEdited->directory = _ui->selectedWorkspaceDirectory->text();
+    _workspacePropertiesEdited->directory = QDir::cleanPath(_ui->selectedWorkspaceDirectory->text());
     _workspacePropertiesEdited->filePath = QString(_workspacePropertiesEdited->directory + Slash + _workspacePropertiesEdited->fileName);
     _workspacePropertiesEdited->description = _ui->selectedWorkspaceDescription->toPlainText();
 
@@ -267,7 +263,7 @@ void FileWorkspaceEditDialog::showFileDialog()
         _lastUsedPath = dir;
     }
 
-    overrideValidation();
+    onWorkspaceDirectoryChanged();
 }
 
 void FileWorkspaceEditDialog::onWorkspaceNameChanged(QString name)
@@ -316,6 +312,11 @@ void FileWorkspaceEditDialog::onWorkspaceDescriptionChanged()
 }
 
 void FileWorkspaceEditDialog::onWorkspaceIsDefaultChanged()
+{
+    overrideValidation();
+}
+
+void FileWorkspaceEditDialog::onWorkspaceDirectoryChanged()
 {
     overrideValidation();
 }
